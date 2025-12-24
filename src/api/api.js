@@ -248,6 +248,15 @@ export async function getUnlockedContacts(userId) {
   return { data: data || [], error }
 }
 
+export async function checkIfUnlocked(listingId) {
+  if (!checkSupabase()) return false
+  const user = await getCurrentUser()
+  if (!user) return false
+  
+  const { data } = await supabase.from('unlocks').select('id').eq('user_id', user.id).eq('listing_id', listingId).maybeSingle()
+  return !!data
+}
+
 // --- REALTIME SUBSCRIPTIONS ---
 const subscriptions = {}
 
