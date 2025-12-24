@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+    </div>
+  </header>
+
+  <main style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="card" style="max-width: 500px; text-align: center; padding: 3rem 2rem;">
+      <div style="width: 100px; height: 100px; background: rgba(34, 197, 94, 0.1); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+        <i class="ri-checkbox-circle-fill" style="font-size: 3rem; color: var(--success);"></i>
+      </div>
+      <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--success);">Payment Successful!</h1>
+      <p style="color: var(--text-secondary); margin-bottom: 2rem;">You now have access to the landlord's contact details.</p>
+
+      <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem; text-align: left;">
+        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">Landlord Contact</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ri-user-line" style="color: var(--primary);"></i>
+            <span id="landlordName">John M.</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ri-phone-line" style="color: var(--primary);"></i>
+            <span id="landlordPhone">+263 77 123 4567</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ri-whatsapp-line" style="color: var(--success);"></i>
+            <a href="#" id="whatsappLink" style="color: var(--success);">Chat on WhatsApp</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <a href="/dashboard/tenant-unlocked.html" class="btn btn-primary" style="flex: 1;">
+          <i class="ri-list-check"></i> View All Contacts
+        </a>
+        <a href="/listings.html" class="btn btn-secondary" style="flex: 1;">
+          <i class="ri-search-line"></i> Browse More
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

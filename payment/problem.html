@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Problem - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="../assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+    </div>
+  </header>
+
+  <main style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="card" style="max-width: 500px; text-align: center; padding: 3rem 2rem;">
+      <div style="width: 100px; height: 100px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+        <i class="ri-error-warning-fill" style="font-size: 3rem; color: var(--danger);"></i>
+      </div>
+      <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--danger);">Payment Problem</h1>
+      <p style="color: var(--text-secondary); margin-bottom: 2rem;">We encountered an issue processing your payment. Don't worry, you haven't been charged.</p>
+
+      <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem; text-align: left;">
+        <h3 style="font-size: 1rem; margin-bottom: 1rem;">Common Issues</h3>
+        <ul style="color: var(--text-secondary); margin-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <li>Insufficient balance in your mobile wallet</li>
+          <li>Network connectivity issues</li>
+          <li>Transaction timeout - please try again</li>
+          <li>Incorrect phone number entered</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <button onclick="history.back()" class="btn btn-primary" style="flex: 1;">
+          <i class="ri-refresh-line"></i> Try Again
+        </button>
+        <a href="contact.html" class="btn btn-secondary" style="flex: 1;">
+          <i class="ri-customer-service-line"></i> Get Help
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>
