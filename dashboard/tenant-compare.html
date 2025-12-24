@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compare Properties - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/dashboard/tenant.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/dashboard/tenant-saved.html" class="nav-link">Saved</a></li>
+          <li><a href="/dashboard/tenant-compare.html" class="nav-link active">Compare</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu"><i class="ri-menu-line"></i></button>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant.html" class="sidebar-link"><i class="ri-dashboard-line"></i><span>Overview</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-saved.html" class="sidebar-link"><i class="ri-heart-line"></i><span>Saved Listings</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-unlocked.html" class="sidebar-link"><i class="ri-lock-unlock-line"></i><span>Unlocked Contacts</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-compare.html" class="sidebar-link active"><i class="ri-scales-line"></i><span>Compare</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-payments.html" class="sidebar-link"><i class="ri-receipt-line"></i><span>Payment History</span></a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()"><i class="ri-logout-box-line"></i><span>Logout</span></a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Compare Properties</h1>
+          <p style="color: var(--text-secondary);">Select up to 3 saved properties to compare side by side</p>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+          <h3 style="margin-bottom: 1rem;">Select Properties to Compare</h3>
+          <div id="propertySelector" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <p style="color: var(--text-secondary);">Loading saved properties...</p>
+          </div>
+        </div>
+
+        <div id="comparisonTable" style="display: none;">
+          <div class="card" style="overflow-x: auto;">
+            <table class="data-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="width: 150px;">Feature</th>
+                  <th id="col1Header">Property 1</th>
+                  <th id="col2Header">Property 2</th>
+                  <th id="col3Header">Property 3</th>
+                </tr>
+              </thead>
+              <tbody id="comparisonBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <i class="ri-scales-line"></i>
+          <h3>No Properties Selected</h3>
+          <p>Save some listings first, then come back to compare them side by side.</p>
+          <a href="/listings.html" class="btn btn-primary">Browse Listings</a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { getSavedListings, getCurrentUser } from '/src/api/api.js';
+    import { logout } from '/src/auth/auth.js';
+    window.logout = logout;
+
+    let savedListings = [];
+    let selectedProperties = [];
+
+    async function init() {
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = '/auth/login.html';
+        return;
+      }
+
+      const { data } = await getSavedListings();
+      savedListings = data || [];
+      
+      if (savedListings.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('propertySelector').parentElement.style.display = 'none';
+        return;
+      }
+
+      renderPropertySelector();
+    }
+
+    function renderPropertySelector() {
+      const container = document.getElementById('propertySelector');
+      container.innerHTML = savedListings.map(item => {
+        const listing = item.listings;
+        const image = listing.listing_images?.[0]?.image_url;
+        return `
+          <label class="comparison-select-item" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; transition: all var(--transition); min-width: 250px;">
+            <input type="checkbox" value="${listing.id}" onchange="toggleProperty('${listing.id}')" style="width: 20px; height: 20px; accent-color: var(--primary);">
+            ${image ? `<img src="${image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 50px; height: 50px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-image-line"></i></div>'}
+            <div>
+              <div style="font-weight: 600;">$${listing.price}${listing.type === 'rent' ? '/mo' : ''}</div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary);">${listing.title.substring(0, 25)}...</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
+
+    window.toggleProperty = function(listingId) {
+      const idx = selectedProperties.indexOf(listingId);
+      if (idx > -1) {
+        selectedProperties.splice(idx, 1);
+      } else if (selectedProperties.length < 3) {
+        selectedProperties.push(listingId);
+      } else {
+        alert('You can only compare up to 3 properties');
+        event.target.checked = false;
+        return;
+      }
+      updateComparison();
+    };
+
+    function updateComparison() {
+      const table = document.getElementById('comparisonTable');
+      if (selectedProperties.length < 2) {
+        table.style.display = 'none';
+        return;
+      }
+      
+      table.style.display = 'block';
+      const properties = selectedProperties.map(id => savedListings.find(s => s.listings.id === id)?.listings).filter(Boolean);
+      
+      properties.forEach((p, i) => {
+        document.getElementById(`col${i+1}Header`).textContent = p.title.substring(0, 20) + '...';
+      });
+      
+      const features = [
+        { label: 'Image', getValue: p => p.listing_images?.[0]?.image_url ? `<img src="${p.listing_images[0].image_url}" style="width: 100px; height: 75px; object-fit: cover; border-radius: var(--radius);">` : 'No image' },
+        { label: 'Price', getValue: p => `$${p.price}${p.type === 'rent' ? '/month' : ''}` },
+        { label: 'Type', getValue: p => p.type === 'rent' ? 'For Rent' : 'For Sale' },
+        { label: 'Location', getValue: p => p.location },
+        { label: 'Bedrooms', getValue: p => `${p.rooms} bed${p.rooms > 1 ? 's' : ''}` },
+        { label: 'Bathrooms', getValue: p => `${p.bathrooms || 1} bath${(p.bathrooms || 1) > 1 ? 's' : ''}` },
+        { label: 'Size', getValue: p => p.size ? `${p.size} sqft` : 'N/A' },
+        { label: 'Furnished', getValue: p => p.furnished ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
+        { label: 'Water', getValue: p => p.water ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
+        { label: 'Electricity', getValue: p => p.electricity ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
+        { label: 'Parking', getValue: p => p.parking ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
+        { label: 'Action', getValue: p => `<a href="/listing.html?id=${p.id}" class="btn btn-sm btn-primary">View</a>` }
+      ];
+      
+      const tbody = document.getElementById('comparisonBody');
+      tbody.innerHTML = features.map(f => `
+        <tr>
+          <td style="font-weight: 600;">${f.label}</td>
+          ${properties.map(p => `<td>${f.getValue(p)}</td>`).join('')}
+          ${properties.length < 3 ? '<td></td>'.repeat(3 - properties.length) : ''}
+        </tr>
+      `).join('');
+    }
+
+    init();
+  </script>
+</body>
+</html>

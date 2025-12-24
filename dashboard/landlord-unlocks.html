@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlock History - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/dashboard/landlord.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/dashboard/landlord-add.html" class="nav-link">Add Listing</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord.html" class="sidebar-link">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-add.html" class="sidebar-link">
+              <i class="ri-add-circle-line"></i>
+              <span>Add Listing</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-unlocks.html" class="sidebar-link active">
+              <i class="ri-lock-unlock-line"></i>
+              <span>Unlock History</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Unlock History</h1>
+          <div class="realtime-indicator">
+            <span class="realtime-dot"></span>
+            <span>Real-time updates</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="unlockHistory">
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="ri-lock-line" style="font-size: 3rem;"></i>
+              <h3>No Unlocks Yet</h3>
+              <p>When tenants unlock your contact, they will appear here with real-time notifications.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { getLandlordUnlocks, getCurrentUser, subscribeToUnlocks, unsubscribe } from '/src/api/api.js';
+    import { showToast } from '/src/utils/toast.js';
+    import { logout } from '/src/auth/auth.js';
+    window.logout = logout;
+
+    let subscription = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser();
+      if (!user || user.role !== 'landlord') {
+        window.location.href = '/auth/login.html';
+        return;
+      }
+      loadUnlockHistory(user.id);
+      setupRealtime(user.id);
+    });
+
+    async function loadUnlockHistory(userId) {
+      const { data: unlocks } = await getLandlordUnlocks(userId);
+      const container = document.getElementById('unlockHistory');
+      
+      if (!unlocks || unlocks.length === 0) return;
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Tenant</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${unlocks.map(unlock => `
+              <tr>
+                <td>${unlock.listings?.title || 'N/A'}</td>
+                <td>${unlock.users?.name || 'Anonymous'}</td>
+                <td>${new Date(unlock.unlocked_at).toLocaleDateString()} ${new Date(unlock.unlocked_at).toLocaleTimeString()}</td>
+                <td>$2.50</td>
+                <td><span class="badge badge-success">Paid</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function setupRealtime(userId) {
+      subscription = subscribeToUnlocks(userId, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          showToast('New Unlock!', 'Someone just unlocked your contact!', 'success');
+          loadUnlockHistory(userId);
+        }
+      });
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (subscription) unsubscribe(subscription);
+    });
+  </script>
+</body>
+</html>

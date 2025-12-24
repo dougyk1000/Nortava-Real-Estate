@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landlord Dashboard - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/dashboard/landlord.html" class="nav-link active">Dashboard</a></li>
+          <li><a href="/dashboard/landlord-add.html" class="nav-link">Add Listing</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <div style="position: relative;" class="notifications-wrapper">
+            <button class="btn btn-icon btn-ghost" id="notifBtn">
+              <i class="ri-notification-line"></i>
+              <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
+            </button>
+          </div>
+          <button class="btn btn-ghost" onclick="logout()">
+            <i class="ri-logout-box-line"></i> Logout
+          </button>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord.html" class="sidebar-link active">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-add.html" class="sidebar-link">
+              <i class="ri-add-circle-line"></i>
+              <span>Add Listing</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-unlocks.html" class="sidebar-link">
+              <i class="ri-lock-unlock-line"></i>
+              <span>Unlock History</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="/faq.html" class="sidebar-link">
+              <i class="ri-question-line"></i>
+              <span>Help / FAQ</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()">
+              <i class="ri-logout-box-line"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <div>
+            <h1 class="dashboard-title">Landlord Dashboard</h1>
+            <div class="realtime-indicator" style="margin-top: 0.5rem;">
+              <span class="realtime-dot"></span>
+              <span>Real-time notifications enabled</span>
+            </div>
+          </div>
+          <a href="/dashboard/landlord-add.html" class="btn btn-primary">
+            <i class="ri-add-line"></i> Add New Listing
+          </a>
+        </div>
+
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
+              <i class="ri-home-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="listingsCount">0</h3>
+              <p>Active Listings</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--secondary);">
+              <i class="ri-lock-unlock-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="unlocksCount">0</h3>
+              <p>Contact Unlocks</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">
+              <i class="ri-eye-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="viewsCount">0</h3>
+              <p>Total Views</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+              <i class="ri-money-dollar-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="earningsAmount">$0</h3>
+              <p>Earnings (Est.)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin: 2rem 0;">
+          <h3 style="margin-bottom: 1.5rem;"><i class="ri-bar-chart-line"></i> Performance Analytics</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="conversionRate">0%</div>
+              <div style="color: var(--text-secondary); font-size: 0.875rem;">Conversion Rate</div>
+              <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">Views to Unlocks</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--success);" id="weeklyUnlocks">0</div>
+              <div style="color: var(--text-secondary); font-size: 0.875rem;">This Week's Unlocks</div>
+              <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">Last 7 days</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+              <div style="font-size: 2rem; font-weight: 700; color: var(--accent);" id="weeklyEarnings">$0</div>
+              <div style="color: var(--text-secondary); font-size: 0.875rem;">Weekly Earnings</div>
+              <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">Last 7 days</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+              <div style="font-size: 2rem; font-weight: 700;" id="verificationStatus">
+                <span class="landlord-badge tier-bronze"><i class="ri-verified-badge-fill"></i> Bronze</span>
+              </div>
+              <div style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Verification Tier</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem;">Recent Unlocks</h2>
+            <a href="/dashboard/landlord-unlocks.html" style="color: var(--primary); font-weight: 500;">View All</a>
+          </div>
+          <div id="recentUnlocks">
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="ri-lock-line" style="font-size: 2.5rem;"></i>
+              <h3 style="font-size: 1.25rem;">No Unlocks Yet</h3>
+              <p>When tenants unlock your contact, they will appear here.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem;">Your Listings</h2>
+            <a href="/dashboard/landlord-add.html" class="btn btn-sm btn-primary">
+              <i class="ri-add-line"></i> Add New
+            </a>
+          </div>
+          <div id="myListings">
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="ri-home-line" style="font-size: 2.5rem;"></i>
+              <h3 style="font-size: 1.25rem;">No Listings Yet</h3>
+              <p>Create your first property listing to start connecting with tenants.</p>
+              <a href="/dashboard/landlord-add.html" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="ri-add-line"></i> Add Your First Listing
+              </a>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/dashboard/dashboard.js"></script>
+</body>
+</html>

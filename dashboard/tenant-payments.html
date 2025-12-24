@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment History - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/dashboard/tenant.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/dashboard/tenant-payments.html" class="nav-link active">Payments</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu"><i class="ri-menu-line"></i></button>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant.html" class="sidebar-link"><i class="ri-dashboard-line"></i><span>Overview</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-saved.html" class="sidebar-link"><i class="ri-heart-line"></i><span>Saved Listings</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-unlocked.html" class="sidebar-link"><i class="ri-lock-unlock-line"></i><span>Unlocked Contacts</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-compare.html" class="sidebar-link"><i class="ri-scales-line"></i><span>Compare</span></a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-payments.html" class="sidebar-link active"><i class="ri-receipt-line"></i><span>Payment History</span></a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()"><i class="ri-logout-box-line"></i><span>Logout</span></a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Payment History</h1>
+          <p style="color: var(--text-secondary);">Track all your unlock payments and download receipts</p>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom: 2rem;">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="ri-money-dollar-circle-line"></i></div>
+            <div class="stat-number" id="totalSpent">$0</div>
+            <div class="stat-label">Total Spent</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="ri-lock-unlock-line"></i></div>
+            <div class="stat-number" id="totalUnlocks">0</div>
+            <div class="stat-label">Properties Unlocked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="ri-calendar-line"></i></div>
+            <div class="stat-number" id="thisMonth">0</div>
+            <div class="stat-label">This Month</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 1.5rem;">Recent Transactions</h3>
+          <div id="transactionsList">
+            <p style="color: var(--text-secondary);">Loading transactions...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { getPaymentHistory, getCurrentUser } from '/src/api/api.js';
+    import { logout } from '/src/auth/auth.js';
+    window.logout = logout;
+
+    async function init() {
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = '/auth/login.html';
+        return;
+      }
+
+      const { data: payments } = await getPaymentHistory(user.id);
+      
+      document.getElementById('totalSpent').textContent = `$${(payments?.length || 0) * 2.50}`;
+      document.getElementById('totalUnlocks').textContent = payments?.length || 0;
+      
+      const now = new Date();
+      const thisMonth = payments?.filter(p => new Date(p.unlocked_at).getMonth() === now.getMonth()).length || 0;
+      document.getElementById('thisMonth').textContent = thisMonth;
+
+      renderTransactions(payments || []);
+    }
+
+    function renderTransactions(payments) {
+      const container = document.getElementById('transactionsList');
+      
+      if (payments.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding: 2rem;">
+            <i class="ri-receipt-line"></i>
+            <h3>No Transactions Yet</h3>
+            <p>When you unlock property contacts, your payments will appear here.</p>
+            <a href="/listings.html" class="btn btn-primary">Browse Listings</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = payments.map(payment => {
+        const date = new Date(payment.unlocked_at);
+        const image = payment.listings?.listing_images?.[0]?.image_url;
+        
+        return `
+          <div class="receipt-card">
+            <div class="receipt-header">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                ${image ? `<img src="${image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-home-line"></i></div>'}
+                <div>
+                  <h4 style="margin-bottom: 0.25rem;">${payment.listings?.title || 'Property'}</h4>
+                  <p style="color: var(--text-secondary); font-size: 0.875rem;">${payment.listings?.location || 'Norton'}</p>
+                </div>
+              </div>
+              <div class="receipt-amount">$${payment.amount || 2.50}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 0.875rem;">
+              <div>
+                <span><i class="ri-calendar-line"></i> ${date.toLocaleDateString()}</span>
+                <span style="margin-left: 1rem;"><i class="ri-time-line"></i> ${date.toLocaleTimeString()}</span>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <span class="badge badge-success">Completed</span>
+                <button class="btn btn-sm btn-secondary" onclick="downloadReceipt('${payment.id}', '${payment.listings?.title}', '${date.toLocaleDateString()}', '${payment.amount || 2.50}')">
+                  <i class="ri-download-line"></i> Receipt
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.downloadReceipt = function(id, property, date, amount) {
+      const receiptContent = `
+NORTAVA - PAYMENT RECEIPT
+========================
+
+Receipt ID: ${id.substring(0, 8).toUpperCase()}
+Date: ${date}
+
+Property: ${property}
+Amount: $${amount}
+Status: COMPLETED
+
+Thank you for using Nortava!
+www.nortava.com
+      `;
+      
+      const blob = new Blob([receiptContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nortava-receipt-${id.substring(0, 8)}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    init();
+  </script>
+</body>
+</html>

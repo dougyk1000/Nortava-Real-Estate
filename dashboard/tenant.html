@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenant Dashboard - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/listings.html" class="nav-link">Browse</a></li>
+          <li><a href="/dashboard/tenant.html" class="nav-link active">Dashboard</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <button class="btn btn-ghost" onclick="logout()">
+            <i class="ri-logout-box-line"></i> Logout
+          </button>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant.html" class="sidebar-link active">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-saved.html" class="sidebar-link">
+              <i class="ri-heart-line"></i>
+              <span>Saved Listings</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-unlocked.html" class="sidebar-link">
+              <i class="ri-lock-unlock-line"></i>
+              <span>Unlocked Contacts</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="/listings.html" class="sidebar-link">
+              <i class="ri-search-line"></i>
+              <span>Browse Properties</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/faq.html" class="sidebar-link">
+              <i class="ri-question-line"></i>
+              <span>Help / FAQ</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()">
+              <i class="ri-logout-box-line"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Welcome back, <span id="userName">User</span></h1>
+          <a href="/listings.html" class="btn btn-primary">
+            <i class="ri-search-line"></i> Find Properties
+          </a>
+        </div>
+
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
+              <i class="ri-heart-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="savedCount">0</h3>
+              <p>Saved Properties</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--secondary);">
+              <i class="ri-lock-unlock-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="unlockedCount">0</h3>
+              <p>Unlocked Contacts</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">
+              <i class="ri-money-dollar-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="spentAmount">$0</h3>
+              <p>Total Spent</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem;">Recent Unlocked Contacts</h2>
+            <a href="/dashboard/tenant-unlocked.html" style="color: var(--primary); font-weight: 500;">View All</a>
+          </div>
+          <div id="recentUnlocks">
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="ri-lock-line" style="font-size: 2.5rem;"></i>
+              <h3 style="font-size: 1.25rem;">No Unlocked Contacts Yet</h3>
+              <p>When you unlock landlord contacts, they will appear here.</p>
+              <a href="/listings.html" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="ri-search-line"></i> Find Properties
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem;">Saved Properties</h2>
+            <a href="/dashboard/tenant-saved.html" style="color: var(--primary); font-weight: 500;">View All</a>
+          </div>
+          <div id="savedListings">
+            <div class="empty-state" style="padding: 2rem;">
+              <i class="ri-heart-line" style="font-size: 2.5rem;"></i>
+              <h3 style="font-size: 1.25rem;">No Saved Properties</h3>
+              <p>Save properties you're interested in to view them later.</p>
+              <a href="/listings.html" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="ri-search-line"></i> Browse Listings
+              </a>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/dashboard/dashboard.js"></script>
+</body>
+</html>

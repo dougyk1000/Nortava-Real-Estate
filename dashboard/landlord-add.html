@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Listing - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/dashboard/landlord.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/dashboard/landlord-add.html" class="nav-link active">Add Listing</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <button class="btn btn-ghost" onclick="logout()">
+            <i class="ri-logout-box-line"></i> Logout
+          </button>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord.html" class="sidebar-link">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-add.html" class="sidebar-link active">
+              <i class="ri-add-circle-line"></i>
+              <span>Add Listing</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/landlord-unlocks.html" class="sidebar-link">
+              <i class="ri-lock-unlock-line"></i>
+              <span>Unlock History</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()">
+              <i class="ri-logout-box-line"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Add New Listing</h1>
+        </div>
+
+        <form class="card" id="addListingForm" style="max-width: 800px;">
+          <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Property Details</h2>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="input-group" style="grid-column: span 2;">
+              <label for="title">Property Title</label>
+              <input type="text" id="title" class="input" placeholder="e.g., Spacious 2 Bedroom House" required>
+            </div>
+
+            <div class="input-group">
+              <label for="type">Listing Type</label>
+              <select id="type" class="input" required>
+                <option value="rent">For Rent</option>
+                <option value="sale">For Sale</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="price">Price (USD)</label>
+              <div class="input-icon">
+                <i class="ri-money-dollar-circle-line"></i>
+                <input type="number" id="price" class="input" placeholder="150" required min="1">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="rooms">Bedrooms</label>
+              <select id="rooms" class="input" required>
+                <option value="1">1 Bedroom</option>
+                <option value="2" selected>2 Bedrooms</option>
+                <option value="3">3 Bedrooms</option>
+                <option value="4">4 Bedrooms</option>
+                <option value="5">5+ Bedrooms</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="bathrooms">Bathrooms</label>
+              <select id="bathrooms" class="input">
+                <option value="1" selected>1 Bathroom</option>
+                <option value="2">2 Bathrooms</option>
+                <option value="3">3+ Bathrooms</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="size">Size (sqft)</label>
+              <input type="number" id="size" class="input" placeholder="850">
+            </div>
+
+            <div class="input-group">
+              <label for="location">Location in Norton</label>
+              <div class="input-icon">
+                <i class="ri-map-pin-line"></i>
+                <input type="text" id="location" class="input" placeholder="e.g., Katanga, Norton" required>
+              </div>
+            </div>
+
+            <div class="input-group" style="grid-column: span 2;">
+              <label for="description">Description</label>
+              <textarea id="description" class="input" rows="5" placeholder="Describe your property in detail..." required></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Amenities</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); transition: all var(--transition);">
+                <input type="checkbox" id="furnished" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <i class="ri-home-gear-line"></i> Furnished
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); transition: all var(--transition);">
+                <input type="checkbox" id="water" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <i class="ri-drop-line"></i> Water Available
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); transition: all var(--transition);">
+                <input type="checkbox" id="electricity" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <i class="ri-flashlight-line"></i> Electricity
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); transition: all var(--transition);">
+                <input type="checkbox" id="parking" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <i class="ri-parking-line"></i> Parking
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Property Images (Max 3)</h3>
+            <div class="image-upload-zone" id="uploadZone">
+              <i class="ri-image-add-line"></i>
+              <p>Click or drag to upload images</p>
+              <small>JPG, PNG up to 5MB each. Maximum 3 images.</small>
+              <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+            </div>
+            <div class="image-preview-grid" id="imagePreviews"></div>
+          </div>
+
+          <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="ri-check-line"></i> Publish Listing
+            </button>
+            <a href="/dashboard/landlord.html" class="btn btn-secondary btn-lg">Cancel</a>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { createListing, uploadListingImage, getCurrentUser } from '/src/api/api.js';
+    import { showToast } from '/src/utils/toast.js';
+    import { logout } from '/src/auth/auth.js';
+    window.logout = logout;
+
+    const uploadZone = document.getElementById('uploadZone');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreviews = document.getElementById('imagePreviews');
+    let uploadedFiles = [];
+
+    uploadZone.addEventListener('click', () => imageInput.click());
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = 'var(--primary)';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.style.borderColor = 'var(--border)';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = 'var(--border)';
+      handleFiles(e.dataTransfer.files);
+    });
+    imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+      const remaining = 3 - uploadedFiles.length;
+      const newFiles = Array.from(files).slice(0, remaining);
+      
+      if (newFiles.length === 0 && files.length > 0) {
+        showToast('Limit Reached', 'Maximum 3 images allowed', 'warning');
+        return;
+      }
+
+      newFiles.forEach(file => {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('File Too Large', 'Images must be under 5MB', 'error');
+          return;
+        }
+
+        uploadedFiles.push(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const preview = document.createElement('div');
+          preview.className = 'image-preview';
+          preview.innerHTML = `
+            <img src="${e.target.result}" alt="Preview">
+            <button type="button" onclick="removeImage(${uploadedFiles.length - 1})">
+              <i class="ri-close-line"></i>
+            </button>
+          `;
+          imagePreviews.appendChild(preview);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      if (uploadedFiles.length >= 3) {
+        uploadZone.style.display = 'none';
+      }
+    }
+
+    window.removeImage = function(index) {
+      uploadedFiles.splice(index, 1);
+      imagePreviews.innerHTML = '';
+      uploadedFiles.forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const preview = document.createElement('div');
+          preview.className = 'image-preview';
+          preview.innerHTML = `
+            <img src="${e.target.result}" alt="Preview">
+            <button type="button" onclick="removeImage(${i})">
+              <i class="ri-close-line"></i>
+            </button>
+          `;
+          imagePreviews.appendChild(preview);
+        };
+        reader.readAsDataURL(file);
+      });
+      if (uploadedFiles.length < 3) {
+        uploadZone.style.display = 'block';
+      }
+    };
+
+    document.getElementById('addListingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading-spinner"></span> Publishing...';
+
+      const listingData = {
+        title: document.getElementById('title').value,
+        type: document.getElementById('type').value,
+        price: parseFloat(document.getElementById('price').value),
+        rooms: parseInt(document.getElementById('rooms').value),
+        bathrooms: parseInt(document.getElementById('bathrooms').value),
+        size: document.getElementById('size').value || null,
+        location: document.getElementById('location').value,
+        description: document.getElementById('description').value,
+        furnished: document.getElementById('furnished').checked,
+        water: document.getElementById('water').checked,
+        electricity: document.getElementById('electricity').checked,
+        parking: document.getElementById('parking').checked
+      };
+
+      const { data: listing, error } = await createListing(listingData);
+
+      if (error) {
+        showToast('Error', error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="ri-check-line"></i> Publish Listing';
+        return;
+      }
+
+      for (const file of uploadedFiles) {
+        await uploadListingImage(listing.id, file);
+      }
+
+      showToast('Success', 'Your listing has been published!', 'success');
+      setTimeout(() => {
+        window.location.href = '/dashboard/landlord.html';
+      }, 1500);
+    });
+  </script>
+</body>
+</html>

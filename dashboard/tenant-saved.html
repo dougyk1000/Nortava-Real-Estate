@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Listings - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/listings.html" class="nav-link">Browse</a></li>
+          <li><a href="/dashboard/tenant.html" class="nav-link">Dashboard</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant.html" class="sidebar-link">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-saved.html" class="sidebar-link active">
+              <i class="ri-heart-line"></i>
+              <span>Saved Listings</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/dashboard/tenant-unlocked.html" class="sidebar-link">
+              <i class="ri-lock-unlock-line"></i>
+              <span>Unlocked Contacts</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="/listings.html" class="sidebar-link">
+              <i class="ri-search-line"></i>
+              <span>Browse Properties</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Saved Listings</h1>
+        </div>
+
+        <div id="savedListings">
+          <div class="empty-state">
+            <i class="ri-heart-line" style="font-size: 3rem;"></i>
+            <h3>No Saved Properties</h3>
+            <p>Properties you save will appear here for easy access.</p>
+            <a href="/listings.html" class="btn btn-primary" style="margin-top: 1rem;">
+              <i class="ri-search-line"></i> Browse Listings
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { getSavedListings, unsaveListing, getCurrentUser } from '/src/api/api.js';
+    import { showToast } from '/src/utils/toast.js';
+    import { logout } from '/src/auth/auth.js';
+    window.logout = logout;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = '/auth/login.html';
+        return;
+      }
+      loadSavedListings();
+    });
+
+    async function loadSavedListings() {
+      const { data: saved } = await getSavedListings();
+      const container = document.getElementById('savedListings');
+      
+      if (!saved || saved.length === 0) return;
+
+      container.innerHTML = `
+        <div class="listings-grid">
+          ${saved.map(item => {
+            const listing = item.listings;
+            const image = listing?.listing_images?.[0]?.image_url || null;
+            return `
+              <div class="card property-card" style="padding: 0;">
+                <div class="property-image">
+                  ${image 
+                    ? `<img src="${image}" alt="${listing.title}">`
+                    : `<div style="width: 100%; height: 200px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;"><i class="ri-image-line" style="font-size: 2rem; color: var(--text-tertiary);"></i></div>`
+                  }
+                  <span class="property-badge">${listing?.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
+                  <button class="property-favorite active" onclick="removeSaved('${listing.id}')"><i class="ri-heart-fill"></i></button>
+                </div>
+                <div class="property-content">
+                  <div class="property-price">$${listing?.price || 0}</div>
+                  <h3 class="property-title">${listing?.title || 'N/A'}</h3>
+                  <div class="property-location">
+                    <i class="ri-map-pin-line"></i>
+                    <span>${listing?.location || 'N/A'}</span>
+                  </div>
+                  <a href="/listing.html?id=${listing?.id}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</a>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    window.removeSaved = async function(listingId) {
+      const { error } = await unsaveListing(listingId);
+      if (!error) {
+        showToast('Removed', 'Property removed from saved', 'success');
+        loadSavedListings();
+      }
+    };
+  </script>
+</body>
+</html>
