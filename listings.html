@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse available properties for rent and sale in Norton, Zimbabwe.">
+  <title>Browse Listings - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="listings.html" class="nav-link active">Listings</a></li>
+          <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <a href="auth/login.html" class="btn btn-ghost">Login</a>
+          <a href="auth/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <button class="mobile-nav-close" aria-label="Close menu"><i class="ri-close-line"></i></button>
+    <ul class="mobile-nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="listings.html" class="nav-link active">Listings</a></li>
+      <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="contact.html" class="nav-link">Contact</a></li>
+    </ul>
+    <div class="mobile-nav-actions">
+      <a href="auth/login.html" class="btn btn-secondary btn-lg">Login</a>
+      <a href="auth/register.html" class="btn btn-primary btn-lg">Get Started</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <nav class="breadcrumbs">
+          <a href="/">Home</a>
+          <i class="ri-arrow-right-s-line"></i>
+          <span>Listings</span>
+        </nav>
+        <h1 class="page-title">Browse Properties</h1>
+        <p class="page-subtitle">Find your perfect home in Norton, Zimbabwe</p>
+      </div>
+    </div>
+
+    <section class="section" style="padding-top: 2rem;">
+      <div class="container">
+        <div class="filters-bar">
+          <div class="input-group">
+            <label>Location</label>
+            <div class="input-icon">
+              <i class="ri-map-pin-line"></i>
+              <input type="text" class="input" placeholder="Search location..." id="filterLocation">
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Type</label>
+            <select class="input" id="filterType">
+              <option value="">All Types</option>
+              <option value="rent">For Rent</option>
+              <option value="sale">For Sale</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Min Price</label>
+            <input type="number" class="input" placeholder="Min" id="filterMinPrice">
+          </div>
+          <div class="input-group">
+            <label>Max Price</label>
+            <input type="number" class="input" placeholder="Max" id="filterMaxPrice">
+          </div>
+          <div class="input-group">
+            <label>Bedrooms</label>
+            <select class="input" id="filterRooms">
+              <option value="">Any</option>
+              <option value="1">1 Bedroom</option>
+              <option value="2">2 Bedrooms</option>
+              <option value="3">3 Bedrooms</option>
+              <option value="4">4+ Bedrooms</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Bathrooms</label>
+            <select class="input" id="filterBathrooms">
+              <option value="">Any</option>
+              <option value="1">1 Bathroom</option>
+              <option value="2">2 Bathrooms</option>
+              <option value="3">3+ Bathrooms</option>
+            </select>
+          </div>
+          <div class="input-group" style="align-self: flex-end;">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="ri-filter-line"></i> Filter
+            </button>
+          </div>
+        </div>
+        
+        <div class="amenities-filters" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-lg); align-items: center;">
+          <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="filterFurnished" style="width: 18px; height: 18px; accent-color: var(--primary);">
+            <i class="ri-home-gear-line"></i> Furnished
+          </label>
+          <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="filterWater" style="width: 18px; height: 18px; accent-color: var(--primary);">
+            <i class="ri-drop-line"></i> Water Available
+          </label>
+          <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="filterElectricity" style="width: 18px; height: 18px; accent-color: var(--primary);">
+            <i class="ri-flashlight-line"></i> Electricity
+          </label>
+          <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="filterParking" style="width: 18px; height: 18px; accent-color: var(--primary);">
+            <i class="ri-parking-line"></i> Parking
+          </label>
+          <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <button class="btn btn-sm btn-secondary" id="saveSearchBtn" title="Save this search">
+              <i class="ri-bookmark-line"></i> Save Search
+            </button>
+            <button class="btn btn-sm btn-ghost" id="clearFiltersBtn" title="Clear all filters">
+              <i class="ri-close-line"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="realtime-indicator" style="margin-bottom: 1rem;">
+          <span class="realtime-dot"></span>
+          <span>Real-time updates enabled</span>
+        </div>
+
+        <div class="listings-grid" id="listingsGrid">
+          <div class="card property-card">
+            <div class="property-image">
+              <div style="width: 100%; height: 200px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
+                <i class="ri-image-line" style="font-size: 2rem;"></i>
+              </div>
+              <span class="property-badge">For Rent</span>
+              <button class="property-favorite" aria-label="Save property"><i class="ri-heart-line"></i></button>
+            </div>
+            <div class="property-content">
+              <div class="property-price">$150 <span>/month</span></div>
+              <h3 class="property-title">Spacious 2 Bedroom House in Katanga</h3>
+              <div class="property-location">
+                <i class="ri-map-pin-line"></i>
+                <span>Katanga, Norton</span>
+              </div>
+              <div class="property-features">
+                <div class="property-feature">
+                  <i class="ri-hotel-bed-line"></i>
+                  <span>2 Beds</span>
+                </div>
+                <div class="property-feature">
+                  <i class="ri-drop-line"></i>
+                  <span>1 Bath</span>
+                </div>
+                <div class="property-feature">
+                  <i class="ri-ruler-line"></i>
+                  <span>850 sqft</span>
+                </div>
+              </div>
+              <a href="listing.html?id=sample" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <i class="ri-home-smile-line"></i>
+          <h3>No Listings Found</h3>
+          <p>There are no properties matching your criteria at the moment. Check back soon or adjust your filters.</p>
+          <button class="btn btn-primary" onclick="location.reload()">
+            <i class="ri-refresh-line"></i> Refresh
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="legal/terms.html">Terms</a>
+          <a href="legal/privacy.html">Privacy</a>
+          <a href="legal/cookies.html">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/listings/listings.js"></script>
+</body>
+</html>

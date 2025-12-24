@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View property details on Nortava">
+  <title>Property Details - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+    .listing-detail {
+      padding: 8rem 0 4rem;
+    }
+    .listing-gallery {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    .gallery-main {
+      aspect-ratio: 16/10;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+    }
+    .gallery-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .gallery-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .gallery-thumb {
+      flex: 1;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: opacity var(--transition);
+    }
+    .gallery-thumb:hover {
+      opacity: 0.8;
+    }
+    .listing-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+    .listing-info h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .listing-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+    }
+    .listing-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .listing-price-large {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+    }
+    .listing-price-large span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-tertiary);
+    }
+    .listing-features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .listing-feature-box {
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+    .listing-feature-box i {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .listing-feature-box strong {
+      display: block;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .listing-feature-box span {
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+    }
+    .listing-description h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .listing-description p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    .listing-sidebar {
+      position: sticky;
+      top: 100px;
+    }
+    .contact-card {
+      padding: 2rem;
+    }
+    .contact-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .landlord-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+    }
+    .landlord-avatar {
+      width: 56px;
+      height: 56px;
+      background: var(--primary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+    }
+    .landlord-details h4 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .landlord-details .verified-badge {
+      color: var(--primary);
+      font-size: 1rem;
+    }
+    .landlord-details p {
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+    }
+    .unlock-box {
+      padding: 1.5rem;
+      background: rgba(37, 99, 235, 0.05);
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .unlock-price {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .unlock-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      margin-top: 0.5rem;
+    }
+    .contact-revealed {
+      padding: 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+    }
+    .contact-revealed h4 {
+      margin-bottom: 1rem;
+      color: var(--success);
+    }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .contact-item:last-child {
+      border-bottom: none;
+    }
+    .contact-item i {
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+    @media (max-width: 768px) {
+      .listing-gallery {
+        grid-template-columns: 1fr;
+      }
+      .gallery-side {
+        flex-direction: row;
+      }
+      .listing-content {
+        grid-template-columns: 1fr;
+      }
+      .listing-sidebar {
+        position: static;
+      }
+      .listing-features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="listings.html" class="nav-link">Listings</a></li>
+          <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <a href="auth/login.html" class="btn btn-ghost">Login</a>
+          <a href="auth/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="listing-detail">
+    <div class="container">
+      <nav class="breadcrumbs" style="justify-content: flex-start; margin-bottom: 1.5rem;">
+        <a href="/">Home</a>
+        <i class="ri-arrow-right-s-line"></i>
+        <a href="listings.html">Listings</a>
+        <i class="ri-arrow-right-s-line"></i>
+        <span id="listingTitle">Property Details</span>
+      </nav>
+
+      <div class="listing-gallery" id="listingGallery">
+        <div class="gallery-main">
+          <i class="ri-image-line" style="font-size: 4rem;"></i>
+        </div>
+        <div class="gallery-side">
+          <div class="gallery-thumb">
+            <i class="ri-image-line" style="font-size: 2rem;"></i>
+          </div>
+          <div class="gallery-thumb">
+            <i class="ri-image-line" style="font-size: 2rem;"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="listing-content">
+        <div class="listing-info">
+          <h1 id="propertyTitle">Spacious 2 Bedroom House in Katanga</h1>
+          <div class="listing-meta">
+            <div class="listing-meta-item">
+              <i class="ri-map-pin-line"></i>
+              <span id="propertyLocation">Katanga, Norton</span>
+            </div>
+            <div class="listing-meta-item">
+              <i class="ri-time-line"></i>
+              <span id="propertyDate">Listed 2 days ago</span>
+            </div>
+            <div class="listing-meta-item">
+              <i class="ri-eye-line"></i>
+              <span id="propertyViews">45 views</span>
+            </div>
+          </div>
+
+          <div class="listing-price-large">$150 <span>/month</span></div>
+
+          <div class="listing-features-grid">
+            <div class="listing-feature-box">
+              <i class="ri-hotel-bed-line"></i>
+              <strong id="bedroomCount">2</strong>
+              <span>Bedrooms</span>
+            </div>
+            <div class="listing-feature-box">
+              <i class="ri-drop-line"></i>
+              <strong id="bathroomCount">1</strong>
+              <span>Bathrooms</span>
+            </div>
+            <div class="listing-feature-box">
+              <i class="ri-ruler-line"></i>
+              <strong id="propertySize">850</strong>
+              <span>Sq metres</span>
+            </div>
+          </div>
+
+          <div class="listing-description">
+            <h3>About This Property</h3>
+            <p id="propertyDescription">
+              This spacious 2-bedroom house is located in the quiet neighborhood of Katanga, Norton. 
+              Perfect for a small family or professionals looking for a comfortable living space. 
+              The property features a well-maintained garden, secure parking, and easy access to local amenities including schools, shops, and public transport.
+              <br><br>
+              The house includes a modern kitchen, spacious living area, and a private backyard. 
+              Water and electricity are included in the rent. Available for immediate occupation.
+            </p>
+          </div>
+
+          <div style="margin-top: 2rem;" id="amenitiesSection">
+            <h3 style="margin-bottom: 1rem;">Amenities</h3>
+            <div id="amenitiesList" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">Location</h3>
+            <div style="height: 300px; background: var(--bg-tertiary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
+              <div style="text-align: center;">
+                <i class="ri-map-2-line" style="font-size: 3rem;"></i>
+                <p style="margin-top: 0.5rem;">Map Placeholder</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem;" id="reviewsSection">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3>Reviews & Ratings</h3>
+              <div id="avgRating" class="stars"></div>
+            </div>
+            <div id="reviewsList">
+              <p style="color: var(--text-secondary);">No reviews yet. Be the first to review!</p>
+            </div>
+            <div id="writeReview" style="margin-top: 1.5rem; display: none;">
+              <h4 style="margin-bottom: 1rem;">Write a Review</h4>
+              <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem;">Your Rating</label>
+                <div class="rating-input" id="ratingInput" style="display: flex; gap: 0.25rem;">
+                  <i class="ri-star-line" data-rating="1" style="cursor: pointer; font-size: 1.5rem; color: var(--accent);"></i>
+                  <i class="ri-star-line" data-rating="2" style="cursor: pointer; font-size: 1.5rem; color: var(--accent);"></i>
+                  <i class="ri-star-line" data-rating="3" style="cursor: pointer; font-size: 1.5rem; color: var(--accent);"></i>
+                  <i class="ri-star-line" data-rating="4" style="cursor: pointer; font-size: 1.5rem; color: var(--accent);"></i>
+                  <i class="ri-star-line" data-rating="5" style="cursor: pointer; font-size: 1.5rem; color: var(--accent);"></i>
+                </div>
+              </div>
+              <textarea id="reviewComment" class="input" rows="3" placeholder="Share your experience..." style="width: 100%; margin-bottom: 1rem;"></textarea>
+              <button class="btn btn-primary" id="submitReviewBtn"><i class="ri-send-plane-line"></i> Submit Review</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="listing-sidebar">
+          <div class="card contact-card">
+            <h3>Contact Landlord</h3>
+            <div class="landlord-info">
+              <div class="landlord-avatar">
+                <i class="ri-user-line"></i>
+              </div>
+              <div class="landlord-details">
+                <h4>
+                  <span id="landlordName">John M.</span>
+                  <i class="ri-verified-badge-fill verified-badge"></i>
+                </h4>
+                <p>Verified Landlord</p>
+              </div>
+            </div>
+
+            <div id="unlockSection">
+              <div class="unlock-box">
+                <div class="unlock-price">$2.50</div>
+                <p class="unlock-text">Unlock landlord contact details</p>
+              </div>
+              <a href="payment/pay.html?listing=sample" class="btn btn-primary btn-lg" style="width: 100%;">
+                <i class="ri-lock-unlock-line"></i> Unlock Contact
+              </a>
+            </div>
+
+            <div id="contactSection" style="display: none;">
+              <div class="contact-revealed">
+                <h4><i class="ri-checkbox-circle-fill"></i> Contact Unlocked</h4>
+                <div class="contact-item">
+                  <i class="ri-phone-line"></i>
+                  <span id="landlordPhone">+263 77 123 4567</span>
+                </div>
+                <div class="contact-item">
+                  <i class="ri-whatsapp-line"></i>
+                  <a href="#" id="whatsappLink">Chat on WhatsApp</a>
+                </div>
+                <div class="contact-item">
+                  <i class="ri-mail-line"></i>
+                  <span id="landlordEmail">landlord@email.com</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+              <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" id="saveBtn">
+                <i class="ri-heart-line"></i> Save Property
+              </button>
+              <a href="report.html" class="btn btn-ghost" style="width: 100%;">
+                <i class="ri-flag-line"></i> Report Listing
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="legal/terms.html">Terms</a>
+          <a href="legal/privacy.html">Privacy</a>
+          <a href="legal/cookies.html">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="gallery-modal" id="galleryModal">
+    <button class="gallery-close" onclick="closeGallery()"><i class="ri-close-line"></i></button>
+    <button class="gallery-nav prev" onclick="prevImage()"><i class="ri-arrow-left-s-line"></i></button>
+    <img id="galleryImage" src="" alt="">
+    <button class="gallery-nav next" onclick="nextImage()"><i class="ri-arrow-right-s-line"></i></button>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+  <script type="module">
+    import { getSingleListing, checkIfUnlocked, getListingReviews, createReview, getCurrentUser, incrementListingViews } from './src/api/api.js';
+    import { showToast } from './src/utils/toast.js';
+
+    let listingId = null;
+    let listingImages = [];
+    let currentImageIndex = 0;
+    let selectedRating = 0;
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      listingId = params.get('id');
+      
+      if (!listingId || listingId === 'sample') return;
+      
+      const { data: listing, error } = await getSingleListing(listingId);
+      if (error || !listing) {
+        showToast('Error', 'Property not found', 'error');
+        return;
+      }
+
+      incrementListingViews(listingId);
+      
+      document.getElementById('listingTitle').textContent = listing.title;
+      document.getElementById('propertyTitle').textContent = listing.title;
+      document.getElementById('propertyLocation').textContent = listing.location;
+      document.getElementById('bedroomCount').textContent = listing.rooms;
+      document.getElementById('bathroomCount').textContent = listing.bathrooms || 1;
+      document.getElementById('propertySize').textContent = listing.size || 'N/A';
+      document.getElementById('propertyDescription').textContent = listing.description;
+      document.getElementById('propertyViews').textContent = `${listing.views || 0} views`;
+      
+      const priceEl = document.querySelector('.listing-price-large');
+      priceEl.innerHTML = listing.type === 'rent' ? `$${listing.price} <span>/month</span>` : `$${listing.price}`;
+      
+      const amenities = [];
+      if (listing.furnished) amenities.push({ icon: 'ri-home-gear-line', label: 'Furnished' });
+      if (listing.water) amenities.push({ icon: 'ri-drop-fill', label: 'Water Available' });
+      if (listing.electricity) amenities.push({ icon: 'ri-flashlight-fill', label: 'Electricity' });
+      if (listing.parking) amenities.push({ icon: 'ri-parking-fill', label: 'Parking' });
+      
+      const amenitiesList = document.getElementById('amenitiesList');
+      if (amenities.length > 0) {
+        amenitiesList.innerHTML = amenities.map(a => `
+          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: var(--radius);">
+            <i class="${a.icon}" style="color: var(--primary);"></i>
+            <span>${a.label}</span>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('amenitiesSection').style.display = 'none';
+      }
+      
+      listingImages = listing.listing_images?.map(img => img.image_url) || [];
+      renderGallery();
+      
+      if (listing.users) {
+        document.getElementById('landlordName').textContent = listing.users.name || 'Landlord';
+      }
+      
+      const user = await getCurrentUser();
+      if (user) {
+        const { data: unlocked } = await checkIfUnlocked(listingId);
+        if (unlocked) {
+          document.getElementById('unlockSection').style.display = 'none';
+          document.getElementById('contactSection').style.display = 'block';
+          document.getElementById('landlordPhone').textContent = listing.users?.phone || 'N/A';
+          document.getElementById('landlordEmail').textContent = listing.users?.email || 'N/A';
+        }
+        document.getElementById('writeReview').style.display = 'block';
+      }
+      
+      loadReviews();
+      setupRatingInput();
+    }
+
+    function renderGallery() {
+      const gallery = document.getElementById('listingGallery');
+      if (listingImages.length === 0) return;
+      
+      gallery.innerHTML = `
+        <div class="gallery-main" onclick="openGallery(0)" style="cursor: pointer;">
+          <img src="${listingImages[0]}" alt="Property main">
+        </div>
+        <div class="gallery-side">
+          ${listingImages.slice(1, 3).map((img, i) => `
+            <div class="gallery-thumb" onclick="openGallery(${i + 1})" style="cursor: pointer;">
+              <img src="${img}" alt="Property ${i + 2}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          `).join('')}
+          ${listingImages.length <= 1 ? '<div class="gallery-thumb"><i class="ri-image-line" style="font-size: 2rem;"></i></div>'.repeat(2 - listingImages.slice(1).length) : ''}
+        </div>
+      `;
+    }
+
+    window.openGallery = function(index) {
+      if (listingImages.length === 0) return;
+      currentImageIndex = index;
+      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+      document.getElementById('galleryModal').classList.add('active');
+    };
+
+    window.closeGallery = function() {
+      document.getElementById('galleryModal').classList.remove('active');
+    };
+
+    window.prevImage = function() {
+      currentImageIndex = (currentImageIndex - 1 + listingImages.length) % listingImages.length;
+      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+    };
+
+    window.nextImage = function() {
+      currentImageIndex = (currentImageIndex + 1) % listingImages.length;
+      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+    };
+
+    async function loadReviews() {
+      const { data: reviews } = await getListingReviews(listingId);
+      const container = document.getElementById('reviewsList');
+      
+      if (!reviews?.length) {
+        container.innerHTML = '<p style="color: var(--text-secondary);">No reviews yet. Be the first to review!</p>';
+        return;
+      }
+      
+      const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+      document.getElementById('avgRating').innerHTML = renderStars(avg) + ` <span style="margin-left: 0.5rem; color: var(--text-secondary);">(${reviews.length} reviews)</span>`;
+      
+      container.innerHTML = reviews.map(review => `
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-avatar">${(review.users?.name || 'U')[0].toUpperCase()}</div>
+            <div>
+              <div style="font-weight: 600;">${review.users?.name || 'Anonymous'}</div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary);">${new Date(review.created_at).toLocaleDateString()}</div>
+            </div>
+            <div style="margin-left: auto;">${renderStars(review.rating)}</div>
+          </div>
+          <p style="color: var(--text-secondary);">${review.comment}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderStars(rating) {
+      return Array(5).fill(0).map((_, i) => 
+        `<i class="ri-star-${i < Math.round(rating) ? 'fill' : 'line'}" style="color: var(--accent);"></i>`
+      ).join('');
+    }
+
+    function setupRatingInput() {
+      const stars = document.querySelectorAll('#ratingInput i');
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          selectedRating = parseInt(star.dataset.rating);
+          stars.forEach((s, i) => {
+            s.className = i < selectedRating ? 'ri-star-fill' : 'ri-star-line';
+          });
+        });
+      });
+      
+      document.getElementById('submitReviewBtn')?.addEventListener('click', async () => {
+        const comment = document.getElementById('reviewComment').value;
+        if (!selectedRating) {
+          showToast('Error', 'Please select a rating', 'error');
+          return;
+        }
+        
+        const { error } = await createReview(listingId, selectedRating, comment);
+        if (error) {
+          showToast('Error', error.message || 'Failed to submit review', 'error');
+        } else {
+          showToast('Success', 'Review submitted!', 'success');
+          loadReviews();
+          document.getElementById('reviewComment').value = '';
+          selectedRating = 0;
+          document.querySelectorAll('#ratingInput i').forEach(s => s.className = 'ri-star-line');
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('galleryModal').classList.contains('active')) return;
+      if (e.key === 'Escape') closeGallery();
+      if (e.key === 'ArrowLeft') prevImage();
+      if (e.key === 'ArrowRight') nextImage();
+    });
+
+    init();
+  </script>
+</body>
+</html>

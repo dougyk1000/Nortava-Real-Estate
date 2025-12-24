@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem;
+      background: var(--bg-card);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background var(--transition);
+    }
+    .faq-question:hover {
+      background: var(--bg-secondary);
+    }
+    .faq-question i {
+      transition: transform var(--transition);
+    }
+    .faq-item.active .faq-question i {
+      transform: rotate(180deg);
+    }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-slow);
+    }
+    .faq-item.active .faq-answer {
+      max-height: 500px;
+    }
+    .faq-answer-content {
+      padding: 1.25rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="listings.html" class="nav-link">Listings</a></li>
+          <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <a href="auth/login.html" class="btn btn-ghost">Login</a>
+          <a href="auth/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu"><i class="ri-menu-line"></i></button>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <nav class="breadcrumbs">
+          <a href="/">Home</a>
+          <i class="ri-arrow-right-s-line"></i>
+          <span>FAQ</span>
+        </nav>
+        <h1 class="page-title">Frequently Asked Questions</h1>
+        <p class="page-subtitle">Find answers to common questions about Nortava</p>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="container" style="max-width: 800px;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">General Questions</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>What is Nortava?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                Nortava is a local-first real estate platform specifically built for Norton, Zimbabwe. We connect tenants and buyers with landlords and sellers, making property search and listing simple and affordable.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Is Nortava free to use?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                Browsing listings is completely free. Landlords can list properties for free. Tenants only pay a small $2.50 fee when they want to unlock a landlord's contact details.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Why focus only on Norton?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                By focusing on Norton, we can provide better, more accurate listings and truly understand the local market. We're not trying to be everything everywhere - we're trying to be the best option for our community.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size: 1.5rem; margin: 2.5rem 0 1.5rem;">For Tenants</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I contact a landlord?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                When you find a property you like, click "Unlock Contact" and pay the $2.50 fee using your preferred mobile payment method. You'll immediately get access to the landlord's phone number and can reach them via call or WhatsApp.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Is the unlock fee a one-time payment?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                Yes! Once you pay to unlock a landlord's contact, you have permanent access. The contact details are saved in your dashboard forever.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>What payment methods are accepted?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                We accept EcoCash, OneMoney, Mukuru, and InnBucks - all popular mobile payment methods in Zimbabwe.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size: 1.5rem; margin: 2.5rem 0 1.5rem;">For Landlords</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I list my property?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                Create a free landlord account, go to your dashboard, and click "Add Listing". Fill in the property details and upload up to 3 photos. Your listing will be published immediately.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Do I pay anything to list?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                No! Listing is completely free. There are no listing fees, monthly charges, or hidden costs. You only benefit when tenants unlock your contact.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I know when someone is interested?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                You'll receive real-time notifications when a tenant unlocks your contact. You can also see all unlocks in your dashboard. Interested tenants will then reach out to you directly.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size: 1.5rem; margin: 2.5rem 0 1.5rem;">Safety & Security</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Are landlords verified?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                We have a verification process for landlords. Verified landlords display a badge on their listings. Always look for this badge and follow our safety tips when viewing properties.
+              </div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I report a fake listing?</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-content">
+                Use the "Report" button on any listing page, or visit our Report page. We take all reports seriously and investigate within 24 hours.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta-section">
+      <div class="container">
+        <h2 class="cta-title">Still Have Questions?</h2>
+        <p class="cta-text">Our support team is here to help you.</p>
+        <div class="cta-actions">
+          <a href="contact.html" class="btn btn-primary btn-lg">Contact Us</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="legal/terms.html">Terms</a>
+          <a href="legal/privacy.html">Privacy</a>
+          <a href="legal/cookies.html">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+  <script>
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', () => {
+        const item = question.parentElement;
+        item.classList.toggle('active');
+      });
+    });
+  </script>
+</body>
+</html>

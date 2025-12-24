@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Issue - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="listings.html" class="nav-link">Listings</a></li>
+          <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <a href="auth/login.html" class="btn btn-ghost">Login</a>
+          <a href="auth/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu"><i class="ri-menu-line"></i></button>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <nav class="breadcrumbs">
+          <a href="/">Home</a>
+          <i class="ri-arrow-right-s-line"></i>
+          <span>Report Issue</span>
+        </nav>
+        <h1 class="page-title">Report an Issue</h1>
+        <p class="page-subtitle">Help us keep Nortava safe and trustworthy</p>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="container" style="max-width: 600px;">
+        <div class="card" style="padding: 2rem;">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 64px; height: 64px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+              <i class="ri-flag-fill" style="font-size: 1.75rem; color: var(--danger);"></i>
+            </div>
+            <p style="color: var(--text-secondary);">We take all reports seriously. Thank you for helping us maintain a safe platform.</p>
+          </div>
+
+          <form id="reportForm">
+            <div class="input-group" style="margin-bottom: 1.25rem;">
+              <label for="reportType">What are you reporting?</label>
+              <select id="reportType" class="input" required>
+                <option value="">Select report type</option>
+                <option value="fake_listing">Fake or Misleading Listing</option>
+                <option value="scam">Suspected Scam</option>
+                <option value="inappropriate">Inappropriate Content</option>
+                <option value="harassment">Harassment</option>
+                <option value="payment">Payment Issue</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 1.25rem;">
+              <label for="listingUrl">Listing URL (if applicable)</label>
+              <div class="input-icon">
+                <i class="ri-link"></i>
+                <input type="text" id="listingUrl" class="input" placeholder="Paste listing link here">
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 1.25rem;">
+              <label for="details">Describe the issue</label>
+              <textarea id="details" class="input" rows="5" placeholder="Please provide as much detail as possible..." required></textarea>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 1.25rem;">
+              <label for="contactEmail">Your Email (optional)</label>
+              <div class="input-icon">
+                <i class="ri-mail-line"></i>
+                <input type="email" id="contactEmail" class="input" placeholder="For follow-up if needed">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-danger btn-lg" style="width: 100%;">
+              <i class="ri-flag-line"></i> Submit Report
+            </button>
+          </form>
+
+          <p style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-tertiary);">
+            Reports are reviewed within 24 hours. For urgent matters, please <a href="/contact.html" style="color: var(--primary);">contact us directly</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="legal/terms.html">Terms</a>
+          <a href="legal/privacy.html">Privacy</a>
+          <a href="legal/cookies.html">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+  <script type="module">
+    import { reportListing } from 'src/api/api.js';
+    import { showToast } from 'src/utils/toast.js';
+    
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const params = new URLSearchParams(window.location.search);
+      const listingId = params.get('listing') || null;
+      const reason = document.getElementById('reportType').value;
+      const details = document.getElementById('details').value;
+      
+      const { error } = await reportListing(listingId, reason, details);
+      
+      if (error) {
+        showToast('Error', 'Failed to submit report', 'error');
+        return;
+      }
+      
+      showToast('Report Submitted', 'Thank you for helping keep Nortava safe', 'success');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

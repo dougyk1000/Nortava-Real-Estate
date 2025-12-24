@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nortava - Find your perfect property in Norton, Zimbabwe. Connect with landlords directly. Local-first real estate platform.">
+  <title>Nortava - Real Estate in Norton, Zimbabwe</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link active">Home</a></li>
+          <li><a href="listings.html" class="nav-link">Listings</a></li>
+          <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <a href="auth/login.html" class="btn btn-ghost">Login</a>
+          <a href="auth/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <button class="mobile-nav-close" aria-label="Close menu">
+      <i class="ri-close-line"></i>
+    </button>
+    <ul class="mobile-nav-links">
+      <li><a href="/" class="nav-link active">Home</a></li>
+      <li><a href="listings.html" class="nav-link">Listings</a></li>
+      <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="faq.html" class="nav-link">FAQ</a></li>
+      <li><a href="contact.html" class="nav-link">Contact</a></li>
+    </ul>
+    <div class="mobile-nav-actions">
+      <a href="auth/login.html" class="btn btn-secondary btn-lg">Login</a>
+      <a href="auth/register.html" class="btn btn-primary btn-lg">Get Started</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-text">
+          <h1>Find Your Perfect Home in Norton, Zimbabwe</h1>
+          <p>The local-first real estate platform connecting tenants with landlords. Browse properties for free, pay only when you're ready to connect.</p>
+          <div class="hero-actions">
+            <a href="listings.html" class="btn btn-primary btn-lg">
+              <i class="ri-search-line"></i> Browse Properties
+            </a>
+            <a href="auth/register.html" class="btn btn-outline btn-lg">
+              <i class="ri-add-line"></i> List Your Property
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <div class="stat-value" id="listingCount">0</div>
+              <div class="stat-label">Active Listings</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="landlordCount">0</div>
+              <div class="stat-label">Verified Landlords</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">$2.50</div>
+              <div class="stat-label">Unlock Fee</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <img src="/assets/images/luxury_apartment_interior.png" alt="Luxury apartment in Norton" style="width: 100%; max-width: 500px; border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg);">
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag"><i class="ri-home-heart-line"></i> Featured Properties</span>
+          <h2 class="section-title">Latest Listings in Norton</h2>
+          <p class="section-subtitle">Discover available properties ready for you to call home</p>
+        </div>
+        <div class="listings-grid" id="featuredListings">
+          <div class="card property-card">
+            <div class="property-image">
+              <img src="/assets/images/family_home_exterior.png" alt="Sample property" style="width: 100%; height: 200px; object-fit: cover;">
+              <span class="property-badge">For Rent</span>
+              <button class="property-favorite" aria-label="Save property"><i class="ri-heart-line"></i></button>
+            </div>
+            <div class="property-content">
+              <div class="property-price">$150 <span>/month</span></div>
+              <h3 class="property-title">Spacious 2 Bedroom House in Katanga</h3>
+              <div class="property-location">
+                <i class="ri-map-pin-line"></i>
+                <span>Katanga, Norton</span>
+              </div>
+              <div class="property-features">
+                <div class="property-feature">
+                  <i class="ri-hotel-bed-line"></i>
+                  <span>2 Beds</span>
+                </div>
+                <div class="property-feature">
+                  <i class="ri-drop-line"></i>
+                  <span>1 Bath</span>
+                </div>
+                <div class="property-feature">
+                  <i class="ri-ruler-line"></i>
+                  <span>850 sqft</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="listings.html" class="btn btn-outline btn-lg">
+            View All Listings <i class="ri-arrow-right-line"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="background: var(--bg-secondary);">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag"><i class="ri-lightbulb-line"></i> How It Works</span>
+          <h2 class="section-title">Simple Steps to Your New Home</h2>
+          <p class="section-subtitle">We've made finding and listing properties incredibly easy</p>
+        </div>
+        <div class="steps-container">
+          <div class="card step-card">
+            <span class="step-number">1</span>
+            <h3 class="step-title">Browse Properties</h3>
+            <p class="step-text">Search through our listings in Norton. Filter by price, rooms, and location to find your perfect match.</p>
+          </div>
+          <div class="card step-card">
+            <span class="step-number">2</span>
+            <h3 class="step-title">Unlock Contact</h3>
+            <p class="step-text">Found something you like? Pay a small $2.50 fee to unlock the landlord's contact details instantly.</p>
+          </div>
+          <div class="card step-card">
+            <span class="step-number">3</span>
+            <h3 class="step-title">Connect Directly</h3>
+            <p class="step-text">Reach out to the landlord via phone or WhatsApp. Schedule viewings and secure your new home.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag"><i class="ri-star-line"></i> Why Nortava</span>
+          <h2 class="section-title">Built for Norton, Made for You</h2>
+          <p class="section-subtitle">A platform that understands the local real estate market</p>
+        </div>
+        <div class="features-grid">
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-money-dollar-circle-line"></i></div>
+            <h3 class="feature-title">Free to List</h3>
+            <p class="feature-text">Landlords can post unlimited properties at no cost. Only pay when tenants unlock your contact.</p>
+          </div>
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-smartphone-line"></i></div>
+            <h3 class="feature-title">Local Payments</h3>
+            <p class="feature-text">Pay with EcoCash, OneMoney, Mukuru, or InnBucks. Methods you know and trust.</p>
+          </div>
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-shield-check-line"></i></div>
+            <h3 class="feature-title">Verified Landlords</h3>
+            <p class="feature-text">We verify landlords to ensure you're connecting with legitimate property owners.</p>
+          </div>
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-time-line"></i></div>
+            <h3 class="feature-title">Real-Time Updates</h3>
+            <p class="feature-text">Get instant notifications when new properties match your search criteria.</p>
+          </div>
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-map-pin-2-line"></i></div>
+            <h3 class="feature-title">Norton Focused</h3>
+            <p class="feature-text">We specialize in Norton properties, giving you the most comprehensive local listings.</p>
+          </div>
+          <div class="card feature-card">
+            <div class="feature-icon"><i class="ri-customer-service-2-line"></i></div>
+            <h3 class="feature-title">24/7 Support</h3>
+            <p class="feature-text">Our AI assistant and support team are always ready to help you navigate the platform.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section trust-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag"><i class="ri-secure-payment-line"></i> Trusted Payments</span>
+          <h2 class="section-title">Pay Your Way</h2>
+          <p class="section-subtitle">We support all major local payment methods</p>
+        </div>
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <i class="ri-shield-check-fill"></i>
+            <span>Secure Payments</span>
+          </div>
+          <div class="trust-badge">
+            <i class="ri-lock-fill"></i>
+            <span>Data Protected</span>
+          </div>
+          <div class="trust-badge">
+            <i class="ri-verified-badge-fill"></i>
+            <span>Verified Listings</span>
+          </div>
+        </div>
+        <div class="payment-methods">
+          <div class="payment-method">
+            <i class="ri-smartphone-fill"></i>
+            <span>EcoCash</span>
+          </div>
+          <div class="payment-method">
+            <i class="ri-phone-fill"></i>
+            <span>OneMoney</span>
+          </div>
+          <div class="payment-method">
+            <i class="ri-bank-card-fill"></i>
+            <span>Mukuru</span>
+          </div>
+          <div class="payment-method">
+            <i class="ri-wallet-3-fill"></i>
+            <span>InnBucks</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta-section">
+      <div class="container">
+        <h2 class="cta-title">Ready to Find Your Next Home?</h2>
+        <p class="cta-text">Join thousands of tenants and landlords in Norton who trust Nortava for their property needs.</p>
+        <div class="cta-actions">
+          <a href="listings.html" class="btn btn-primary btn-lg">Browse Listings</a>
+          <a href="auth/register.html" class="btn btn-outline btn-lg">List Your Property</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="logo">
+            <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+            <span>Nortava</span>
+          </a>
+          <p class="footer-text">The local-first real estate platform for Norton, Zimbabwe. Connecting tenants with landlords since 2024.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="Facebook"><i class="ri-facebook-fill"></i></a>
+            <a href="#" aria-label="Twitter"><i class="ri-twitter-x-fill"></i></a>
+            <a href="#" aria-label="WhatsApp"><i class="ri-whatsapp-fill"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h4>Platform</h4>
+          <ul class="footer-links">
+            <li><a href="listings.html">Browse Listings</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>For Users</h4>
+          <ul class="footer-links">
+            <li><a href="auth/register.html">Create Account</a></li>
+            <li><a href="auth/login.html">Login</a></li>
+            <li><a href="safety.html">Safety Tips</a></li>
+            <li><a href="report.html">Report Issue</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Support</h4>
+          <ul class="footer-links">
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="faq.html">Help Center</a></li>
+            <li><a href="legal/terms.html">Terms of Service</a></li>
+            <li><a href="legal/privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="legal/terms.html">Terms</a>
+          <a href="legal/privacy.html">Privacy</a>
+          <a href="legal/cookies.html">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
