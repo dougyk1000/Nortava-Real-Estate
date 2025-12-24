@@ -1,0 +1,33 @@
+<div id="priceRecommendationWidget" style="display: none;"></div>
+<script>
+  // Integrated into landlord-add.html form submission
+  import { calculateRecommendedPrice, renderPriceRecommendationWidget } from '../src/pricing/pricing.js';
+
+  function showPriceRecommendation() {
+    const title = document.getElementById('title')?.value || '';
+    const location = document.getElementById('location')?.value || '';
+    const rooms = parseInt(document.getElementById('rooms')?.value || '1');
+    const bathrooms = parseInt(document.getElementById('bathrooms')?.value || '1');
+    const size = parseInt(document.getElementById('size')?.value || '600');
+    const price = parseInt(document.getElementById('price')?.value || '150');
+    const furnished = document.getElementById('furnished')?.checked || false;
+    const water = document.getElementById('water')?.checked || false;
+    const electricity = document.getElementById('electricity')?.checked || false;
+    const parking = document.getElementById('parking')?.checked || false;
+
+    const recommendation = calculateRecommendedPrice({
+      location, rooms, bathrooms, size, price, furnished, water, electricity, parking
+    });
+
+    const widget = document.getElementById('priceRecommendationWidget');
+    if (widget) {
+      widget.innerHTML = renderPriceRecommendationWidget({
+        title, location, rooms, size, furnished, water, electricity, parking, type: 'rent'
+      });
+      widget.style.display = 'block';
+    }
+  }
+
+  // Show recommendation when price changes
+  document.getElementById('price')?.addEventListener('change', showPriceRecommendation);
+</script>

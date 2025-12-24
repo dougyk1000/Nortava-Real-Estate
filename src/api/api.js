@@ -473,3 +473,10 @@ export async function incrementListingViews(listingId) {
   const { error } = await supabase.rpc('increment_views', { listing_id: listingId })
   return { error }
 }
+
+// --- NOTIFICATIONS ---
+export async function getUnreadNotifications(userId) {
+  if (!checkSupabase()) return { data: [], error: null }
+  const { data, error } = await supabase.from('notifications').select('*').eq('user_id', userId).eq('read', false).order('created_at', { ascending: false })
+  return { data: data || [], error }
+}
