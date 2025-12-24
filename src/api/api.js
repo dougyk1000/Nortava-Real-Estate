@@ -480,3 +480,49 @@ export async function getUnreadNotifications(userId) {
   const { data, error } = await supabase.from('notifications').select('*').eq('user_id', userId).eq('read', false).order('created_at', { ascending: false })
   return { data: data || [], error }
 }
+
+// --- ADMIN FUNCTIONS ---
+export async function getAdminStats() {
+  if (!checkSupabase()) return { data: {}, error: null }
+  
+  try {
+    const [usersRes, listingsRes, unlocksRes, reportsRes, verifiedRes] = await Promise.all([
+      supabase.from('users').select('id'),
+      supabase.from('listings').select('id'),
+      supabase.from('unlocks').select('id'),
+      supabase.from('reports').select('id'),
+      supabase.from('users').select('id').eq('verified', true)
+    ])
+    
+    return {
+      data: {
+        totalUsers: usersRes.data?.length || 0,
+        totalListings: listingsRes.data?.length || 0,
+        totalUnlocks: unlocksRes.data?.length || 0,
+        pendingReports: reportsRes.data?.length || 0,
+        verifiedLandlords: verifiedRes.data?.length || 0
+      },
+      error: null
+    }
+  } catch (error) {
+    return { data: {}, error }
+  }
+}
+
+export async function verifyUserAccount(userId) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase.from('users').update({ verified: true }).eq('id', userId).select().maybeSingle()
+  return { data, error }
+}
+
+export async function suspendUserAccount(userId) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase.from('users').update({ verified: false }).eq('id', userId).select().maybeSingle()
+  return { data, error }
+}
+
+export async function updateReportStatus(reportId, status) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase.from('reports').update({ status }).eq('id', reportId).select().maybeSingle()
+  return { data, error }
+}
