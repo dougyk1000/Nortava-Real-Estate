@@ -30,7 +30,10 @@ function setupLoginForm() {
       showToast('Welcome Back', 'Login successful!', 'success');
       
       const user = await getCurrentUser();
-      redirectByRole(user?.role);
+      // Check if user is admin
+      const adminEmail = 'douglasnkowo3036@gmail.com';
+      const role = email === adminEmail ? 'admin' : user?.role;
+      redirectByRole(role);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="ri-login-box-line"></i> Sign In';
@@ -97,7 +100,7 @@ function redirectByRole(role) {
   const roleMap = {
     landlord: '/dashboard/landlord.html',
     tenant: '/dashboard/tenant.html',
-    admin: '/admin/index.html'
+    admin: '/admin/dashboard.html'
   };
   
   const target = roleMap[role] || '/';
