@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Landlords - Admin - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/admin/index.html" class="nav-link">Dashboard</a></li>
+          <li><a href="/admin/listings.html" class="nav-link">Listings</a></li>
+          <li><a href="/admin/verify-landlords.html" class="nav-link active">Landlords</a></li>
+          <li><a href="/admin/reports.html" class="nav-link">Reports</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/admin/index.html" class="sidebar-link">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/verify-landlords.html" class="sidebar-link active">
+              <i class="ri-user-settings-line"></i>
+              <span>Verify Landlords</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/listings.html" class="sidebar-link">
+              <i class="ri-home-line"></i>
+              <span>Manage Listings</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/reports.html" class="sidebar-link">
+              <i class="ri-flag-line"></i>
+              <span>Reports</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Verify Landlords</h1>
+        </div>
+
+        <div class="card">
+          <div id="landlordsList">
+            <p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">Loading landlords...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/admin/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Nortava</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/admin/index.html" class="nav-link active">Dashboard</a></li>
+          <li><a href="/admin/listings.html" class="nav-link">Listings</a></li>
+          <li><a href="/admin/verify-landlords.html" class="nav-link">Landlords</a></li>
+          <li><a href="/admin/reports.html" class="nav-link">Reports</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme"><i class="ri-moon-line"></i></button>
+          <button class="btn btn-ghost" onclick="logout()"><i class="ri-logout-box-line"></i> Logout</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item">
+            <a href="/admin/index.html" class="sidebar-link active">
+              <i class="ri-dashboard-line"></i>
+              <span>Overview</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/verify-landlords.html" class="sidebar-link">
+              <i class="ri-user-settings-line"></i>
+              <span>Verify Landlords</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/listings.html" class="sidebar-link">
+              <i class="ri-home-line"></i>
+              <span>Manage Listings</span>
+            </a>
+          </li>
+          <li class="sidebar-item">
+            <a href="/admin/reports.html" class="sidebar-link">
+              <i class="ri-flag-line"></i>
+              <span>Reports</span>
+            </a>
+          </li>
+          <div class="sidebar-divider"></div>
+          <li class="sidebar-item">
+            <a href="#" class="sidebar-link" onclick="logout()">
+              <i class="ri-logout-box-line"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="dashboard-main">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Admin Dashboard</h1>
+        </div>
+
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
+              <i class="ri-user-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="totalUsers">0</h3>
+              <p>Total Users</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--secondary);">
+              <i class="ri-home-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="totalListings">0</h3>
+              <p>Total Listings</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">
+              <i class="ri-money-dollar-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="totalPayments">0</h3>
+              <p>Completed Payments</p>
+            </div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+              <i class="ri-flag-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="pendingReports">0</h3>
+              <p>Pending Reports</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="card">
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Quick Actions</h2>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <a href="/admin/verify-landlords.html" class="btn btn-secondary" style="justify-content: flex-start;">
+                <i class="ri-user-settings-line"></i> Verify Landlords
+              </a>
+              <a href="/admin/reports.html" class="btn btn-secondary" style="justify-content: flex-start;">
+                <i class="ri-flag-line"></i> Review Reports
+              </a>
+              <a href="/admin/listings.html" class="btn btn-secondary" style="justify-content: flex-start;">
+                <i class="ri-home-line"></i> Manage Listings
+              </a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Recent Activity</h2>
+            <div id="recentActivity">
+              <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">No recent activity</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/admin/admin.js"></script>
+</body>
+</html>
