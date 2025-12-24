@@ -112,7 +112,12 @@ async function checkAuthRedirect() {
   const user = await getCurrentUser();
   const isAuthPage = window.location.pathname.includes('/auth/');
   
-  if (user && isAuthPage) redirectByRole(user.role);
+  if (user && isAuthPage) {
+    // Check if user is admin
+    const adminEmail = 'douglasnkowo3036@gmail.com';
+    const role = user.email === adminEmail ? 'admin' : user.role;
+    redirectByRole(role);
+  }
 }
 
 // ---------------- LOGOUT ----------------
