@@ -539,14 +539,28 @@ img {
 .chat-message.bot {
   background: white !important;
   border: 1px solid var(--border);
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   border-radius: 12px 12px 12px 0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  max-width: 85%;
+  align-self: flex-start;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .chat-message.user {
   background: var(--primary) !important;
   color: white !important;
   border-radius: 12px 12px 0 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  max-width: 85%;
+  align-self: flex-end;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .quick-reply {

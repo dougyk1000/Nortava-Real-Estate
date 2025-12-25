@@ -354,7 +354,16 @@ function addMessage(text, sender) {
   const messagesContainer = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
   messageDiv.className = `chat-message ${sender}`;
+  
+  // Use innerHTML to handle line breaks if needed, or textContent for safety
+  // Since we want to show texts, let's ensure it's visible
   messageDiv.textContent = text;
+  
+  // Force visibility styles just in case
+  messageDiv.style.display = 'block';
+  messageDiv.style.visibility = 'visible';
+  messageDiv.style.opacity = '1';
+  
   messagesContainer.appendChild(messageDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
   
