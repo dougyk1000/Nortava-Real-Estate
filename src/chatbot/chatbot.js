@@ -21,10 +21,33 @@ const CHATBOT_RESPONSES = {
     ]
   },
   listings: {
-    patterns: ['listing', 'property', 'properties', 'house', 'apartment', 'room', 'find', 'search', 'browse'],
+    patterns: ['listing', 'property', 'properties', 'house', 'apartment', 'room', 'find', 'search', 'browse', 'available'],
     responses: [
-      "To find properties:\n\n1. Go to the Listings page\n2. Use filters to narrow by price, rooms, or location\n3. Click on any property for details\n4. Unlock the landlord's contact when you're interested\n\nWould you like to browse listings now?",
-      "You can search by price, location, or type of property. Save your favorites and unlock contacts when you're ready to reach landlords."
+      "I can help you find exactly what you're looking for! We have listings across Norton—from Katanga to the Crescent. Are you looking for a full house, a cottage, or maybe just a room?",
+      "To find your next home: \n1. Head to the 'Browse' page\n2. Filter by your budget (rent usually starts around $100 for rooms)\n3. Look for the 'Verified' badge for extra safety.\nWhat area of Norton do you prefer?",
+      "Finding a place in Norton is easy with Nortava! Pro tip: our listings update in real-time. If you find a place you like, unlock it quickly before someone else does!"
+    ]
+  },
+  nortonInfo: {
+    patterns: ['about norton', 'places in norton', 'schools', 'shops', 'amenities', 'hospital', 'police'],
+    responses: [
+      "Norton is a thriving town! If you're looking for convenience, Katanga has the best local markets. For a quieter residential feel, check out the Crescent or Twin Lakes areas.",
+      "Moving with family? Norton has great schools like Norton Development Council Primary and several secondary options. Most residential areas have good access to local clinics and the main police station near the highway.",
+      "Shopping in Norton is great! You have the main shopping centers along the Bulawayo road, plus Katanga's vibrant market. Most areas are well-connected by local transport (kombis)."
+    ]
+  },
+  landlordValue: {
+    patterns: ['why list', 'is it really free', 'benefits for landlords', 'how much can i earn'],
+    responses: [
+      "Listing is 100% free! You don't pay us a cent to post. You benefit from:\n- Targeted Norton audience\n- Automated tenant notifications\n- Fraud protection through verification\n- Analytics to see how many people are viewing your home.",
+      "Maximize your earnings by getting Verified! Verified landlords get 3x more unlocks because tenants trust them more. It's a simple process to build your reputation in Norton."
+    ]
+  },
+  tenantValue: {
+    patterns: ['why pay', 'is it worth $2.50', 'value for tenants', 'contact fee'],
+    responses: [
+      "The $2.50 fee helps us keep the platform clean of fake listings and scams. For less than the price of a lunch, you get direct, verified access to landlords, saving you time and transport money on 'viewing' fake places.",
+      "Think of it as an investment in safety. We verify landlords so you don't have to worry about meeting 'agents' who don't actually own the property."
     ]
   },
   landlord: {
@@ -63,7 +86,29 @@ const CHATBOT_RESPONSES = {
   norton: {
     patterns: ['norton', 'zimbabwe', 'location', 'area', 'where'],
     responses: [
-      "Nortava is specifically built for Norton, Zimbabwe! We focus on:\n\n- Residential properties in Norton\n- Local payment methods\n- Community-verified landlords\n- Properties that match Norton's market\n\nWe know Norton because we're local!"
+      "Nortava is specifically built for Norton, Zimbabwe! We focus on areas like Katanga, Crescent, and Twin Lakes. We know Norton because we're local!",
+      "Looking for a place in Norton? We cover all residential zones. Katanga is great for convenience, while the Crescent offers a quieter feel. What area interests you?"
+    ]
+  },
+  nortonInfo: {
+    patterns: ['schools', 'shops', 'amenities', 'hospital', 'police'],
+    responses: [
+      "Norton has great amenities! You'll find schools like Norton Development Council Primary, vibrant markets in Katanga, and essential services like the main police station near the highway.",
+      "Most residential areas in Norton have good access to local clinics and shopping centers along the Bulawayo road. It's a well-connected community!"
+    ]
+  },
+  landlordValue: {
+    patterns: ['why list', 'benefits for landlords'],
+    responses: [
+      "Listing is 100% free! Benefit from a targeted Norton audience, automated notifications, and fraud protection. Plus, see exactly how many people are viewing your property!",
+      "Verified landlords in Norton get more trust and more contact unlocks. It's the best way to reach serious tenants in town."
+    ]
+  },
+  tenantValue: {
+    patterns: ['why pay', 'is it worth', 'contact fee'],
+    responses: [
+      "The $2.50 fee ensures you get direct, verified access to real landlords. It saves you time and transport money by filtering out fake listings and scams.",
+      "Think of it as an investment in safety. We verify landlords so you can search for your next home in Norton with confidence."
     ]
   },
   thanks: {
@@ -224,12 +269,22 @@ function createChatbotUI() {
     </button>
     <div class="chatbot-container">
       <div class="chatbot-header">
-        <h3><i class="ri-robot-fill"></i> Nortava Assistant</h3>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <i class="ri-robot-2-fill" style="font-size: 1.5rem;"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 1rem;">Nortava AI</h3>
+            <span style="font-size: 0.75rem; opacity: 0.8; display: flex; align-items: center; gap: 4px;">
+              <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> Online
+            </span>
+          </div>
+        </div>
         <button class="chatbot-close" aria-label="Close chat"><i class="ri-close-line"></i></button>
       </div>
       <div class="chatbot-messages" id="chatMessages">
         <div class="chat-message bot">
-          Hello! I'm your Nortava assistant. I can help you with finding properties, understanding payments, listing your property, and more. How can I assist you today?
+          Hi! 👋 I'm the Nortava AI. I know everything about property in Norton. Want to know about Katanga prices, how verification works, or the best schools in the area? I'm here to help!
         </div>
       </div>
       <div class="quick-replies">
