@@ -26,9 +26,11 @@
           <button class="theme-toggle" aria-label="Toggle theme">
             <i class="ri-moon-line"></i>
           </button>
-          <button class="btn btn-ghost" onclick="logout()">
-            <i class="ri-logout-box-line"></i> Logout
-          </button>
+          <div class="user-menu" style="display: flex; gap: 1rem; align-items: center;">
+            <button class="btn btn-outline" onclick="logout()" style="padding: 0.5rem 1rem;">
+              <i class="ri-logout-box-line"></i> Logout
+            </button>
+          </div>
         </div>
       </nav>
       <button class="mobile-menu-btn" aria-label="Open menu">

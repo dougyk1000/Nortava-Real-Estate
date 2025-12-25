@@ -1,11 +1,12 @@
 import { initTheme, setupThemeToggle } from './utils/theme.js';
-import { initNavigation } from './utils/navigation.js';
+import { initNavigation, updateNavForAuth } from './utils/navigation.js';
 import { initChatbot } from './chatbot/chatbot.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   setupThemeToggle();
   initNavigation();
+  updateNavForAuth();
   initChatbot();
   
   observeAnimations();

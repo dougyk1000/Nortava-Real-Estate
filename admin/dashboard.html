@@ -131,33 +131,39 @@
   </style>
 </head>
 <body>
-  <div class="admin-header">
-    <div style="display: flex; align-items: center; gap: 2rem; flex: 1;">
-      <h1><i class="ri-shield-admin-fill"></i> Admin Dashboard</h1>
-      <nav style="display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0;">
-        <a href="/" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; opacity: 0.9; transition: opacity 0.2s;">
-          <i class="ri-home-line"></i> Home
-        </a>
-        <a href="/listings.html" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; opacity: 0.9; transition: opacity 0.2s;">
-          <i class="ri-building-line"></i> Listings
-        </a>
-        <a href="/about.html" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; opacity: 0.9; transition: opacity 0.2s;">
-          <i class="ri-information-line"></i> About
-        </a>
-        <a href="/contact.html" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; opacity: 0.9; transition: opacity 0.2s;">
-          <i class="ri-phone-line"></i> Contact
-        </a>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/listings.html" class="nav-link">Browse</a></li>
+          <li><a href="/admin/dashboard.html" class="nav-link active">Admin Panel</a></li>
+          <li><a href="/about.html" class="nav-link">About</a></li>
+          <li><a href="/contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <i class="ri-moon-line"></i>
+          </button>
+          <div class="user-menu" style="display: flex; gap: 1rem; align-items: center;">
+            <span id="adminEmail" style="color: var(--text-secondary); font-size: 0.85rem;"></span>
+            <button class="btn btn-outline" onclick="logoutAdmin()" style="padding: 0.5rem 1rem;">
+              <i class="ri-logout-box-line"></i> Logout
+            </button>
+          </div>
+        </div>
       </nav>
-    </div>
-    <div style="display: flex; gap: 1rem; align-items: center; margin-left: auto;">
-      <span id="adminEmail" style="color: var(--text-secondary); font-size: 0.85rem; display: none; @media (min-width: 640px) { display: inline; }"></span>
-      <button class="btn btn-ghost" onclick="logoutAdmin()" style="padding: 0.5rem; border: 1px solid var(--border);">
-        <i class="ri-logout-box-line"></i> <span style="display: none; @media (min-width: 640px) { display: inline; }">Logout</span>
+      <button class="mobile-menu-btn" aria-label="Open menu">
+        <i class="ri-menu-line"></i>
       </button>
     </div>
-  </div>
+  </header>
 
-  <div class="admin-layout">
+  <div class="admin-layout" style="margin-top: 2rem;">
     <aside class="admin-sidebar">
       <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; color: var(--text-secondary);">Menu</h3>
       <div class="admin-menu-item active" onclick="switchTab('overview')">
@@ -371,6 +377,7 @@
   <script type="module">
     import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../src/api/api.js';
     import { showToast } from '../src/utils/toast.js';
+    import { updateNavForAuth } from '../src/utils/navigation.js';
 
     // Check admin access
     async function checkAdminAccess() {
@@ -382,6 +389,7 @@
         return;
       }
       document.getElementById('adminEmail').textContent = user.email;
+      updateNavForAuth();
     }
 
     async function loadDashboard() {

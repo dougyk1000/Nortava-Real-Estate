@@ -19,7 +19,6 @@
           <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="/listings.html" class="nav-link">Browse</a></li>
           <li><a href="/dashboard/landlord.html" class="nav-link active">Dashboard</a></li>
-          <li><a href="/dashboard/landlord-add.html" class="nav-link">Add Listing</a></li>
           <li><a href="/about.html" class="nav-link">About</a></li>
           <li><a href="/contact.html" class="nav-link">Contact</a></li>
         </ul>
@@ -27,15 +26,17 @@
           <button class="theme-toggle" aria-label="Toggle theme">
             <i class="ri-moon-line"></i>
           </button>
-          <div style="position: relative;" class="notifications-wrapper">
-            <button class="btn btn-icon btn-ghost" id="notifBtn">
-              <i class="ri-notification-line"></i>
-              <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
+          <div class="user-menu" style="display: flex; gap: 1rem; align-items: center;">
+            <div style="position: relative;" class="notifications-wrapper">
+              <button class="btn btn-icon btn-ghost" id="notifBtn">
+                <i class="ri-notification-line"></i>
+                <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
+              </button>
+            </div>
+            <button class="btn btn-outline" onclick="logout()" style="padding: 0.5rem 1rem;">
+              <i class="ri-logout-box-line"></i> Logout
             </button>
           </div>
-          <button class="btn btn-ghost" onclick="logout()">
-            <i class="ri-logout-box-line"></i> Logout
-          </button>
         </div>
       </nav>
       <button class="mobile-menu-btn" aria-label="Open menu">

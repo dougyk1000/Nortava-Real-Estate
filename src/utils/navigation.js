@@ -68,16 +68,60 @@ export function getCurrentUser() {
 
 export function updateNavForAuth() {
   const user = getCurrentUser();
-  const authButtons = document.querySelector('.auth-buttons');
-  const userMenu = document.querySelector('.user-menu');
+  const navActions = document.querySelector('.nav-actions');
+  const mobileActions = document.querySelector('.mobile-nav-actions');
+  const navLinks = document.querySelector('.nav-links');
+  const mobileLinks = document.querySelector('.mobile-nav-links');
   
-  if (user && authButtons && userMenu) {
-    authButtons.style.display = 'none';
-    userMenu.style.display = 'flex';
+  if (user) {
+    const adminEmail = 'douglasnkowo3036@gmail.com';
+    const role = user.email === adminEmail ? 'admin' : user.role;
     
-    const userName = userMenu.querySelector('.user-name');
-    if (userName) {
-      userName.textContent = user.name || user.email;
+    const dashboardLink = role === 'admin' ? '/admin/dashboard.html' : 
+                         role === 'landlord' ? '/dashboard/landlord.html' : 
+                         '/dashboard/tenant.html';
+    
+    const dashboardLabel = role.charAt(0).toUpperCase() + role.slice(1) + ' Dashboard';
+
+    // Desktop Header
+    if (navActions) {
+      navActions.innerHTML = `
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <i class="ri-moon-line"></i>
+        </button>
+        <div class="user-menu" style="display: flex; gap: 1rem; align-items: center;">
+          <a href="${dashboardLink}" class="btn btn-ghost">
+            <i class="ri-dashboard-line"></i> Dashboard
+          </a>
+          <button onclick="logout()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+            <i class="ri-logout-box-line"></i> Logout
+          </button>
+        </div>
+      `;
+      // Re-setup theme toggle since we replaced HTML
+      const { setupThemeToggle } = window.nortava?.theme || {};
+      if (setupThemeToggle) setupThemeToggle();
+    }
+
+    // Mobile Nav
+    if (mobileActions) {
+      mobileActions.innerHTML = `
+        <a href="${dashboardLink}" class="btn btn-primary btn-lg">${dashboardLabel}</a>
+        <button onclick="logout()" class="btn btn-secondary btn-lg">Logout</button>
+      `;
+    }
+
+    // Add Dashboard to main links if not present
+    if (navLinks && !navLinks.querySelector(`a[href="${dashboardLink}"]`)) {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="${dashboardLink}" class="nav-link">Dashboard</a>`;
+      navLinks.appendChild(li);
+    }
+    
+    if (mobileLinks && !mobileLinks.querySelector(`a[href="${dashboardLink}"]`)) {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="${dashboardLink}" class="nav-link">Dashboard</a>`;
+      mobileLinks.appendChild(li);
     }
   }
 }
