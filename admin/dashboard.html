@@ -371,18 +371,19 @@
   </div>
 
   <script type="module">
-    import { getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../src/api/api.js';
+    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../src/api/api.js';
     import { showToast } from '../src/utils/toast.js';
 
     // Check admin access
-    function checkAdminAccess() {
-      const session = localStorage.getItem('nortava-admin-session');
-      if (!session) {
-        window.location.href = '/admin-login.html';
+    async function checkAdminAccess() {
+      const user = await getCurrentUser();
+      const adminEmail = 'douglasnkowo3036@gmail.com';
+      
+      if (!user || user.email !== adminEmail) {
+        window.location.href = '/auth/login.html';
         return;
       }
-      const admin = JSON.parse(session);
-      document.getElementById('adminEmail').textContent = admin.email;
+      document.getElementById('adminEmail').textContent = user.email;
     }
 
     async function loadDashboard() {
@@ -502,8 +503,8 @@
       event.target.closest('.admin-menu-item').classList.add('active');
     };
 
-    window.logoutAdmin = function() {
-      localStorage.removeItem('nortava-admin-session');
+    window.logoutAdmin = async function() {
+      await logoutUser();
       showToast('Success', 'Logged out from admin panel', 'success');
       setTimeout(() => {
         window.location.href = '/';

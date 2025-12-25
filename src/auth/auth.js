@@ -110,13 +110,21 @@ function redirectByRole(role) {
 // ---------------- CHECK IF LOGGED IN ----------------
 async function checkAuthRedirect() {
   const user = await getCurrentUser();
-  const isAuthPage = window.location.pathname.includes('/auth/');
+  const isAuthPage = window.location.pathname.includes('/auth/') || 
+                     window.location.pathname.endsWith('/login.html') || 
+                     window.location.pathname.endsWith('/register.html') ||
+                     window.location.pathname === '/' ||
+                     window.location.pathname === '/index.html';
   
-  if (user && isAuthPage) {
+  if (user) {
     // Check if user is admin
     const adminEmail = 'douglasnkowo3036@gmail.com';
     const role = user.email === adminEmail ? 'admin' : user.role;
-    redirectByRole(role);
+    
+    // If on auth page or homepage and logged in, redirect to dashboard
+    if (isAuthPage) {
+      redirectByRole(role);
+    }
   }
 }
 

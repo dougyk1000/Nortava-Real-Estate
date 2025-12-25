@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  const adminEmail = 'douglasnkowo3036@gmail.com';
+  if (user.email === adminEmail) {
+    window.location.href = '/admin/dashboard.html';
+    return;
+  }
+
   updateUserName(user);
   
   if (user.role === 'tenant') {
