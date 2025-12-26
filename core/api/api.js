@@ -143,8 +143,7 @@ export async function createListing(listingData) {
   
   const { data, error } = await supabase.from('listings').insert({
     ...listingData,
-    user_id: user.id,
-    verified: false
+    user_id: user.id
   }).select().maybeSingle()
   
   return { data, error }
