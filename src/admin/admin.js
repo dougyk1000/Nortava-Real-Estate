@@ -19,17 +19,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadAdminDashboard() {
-  const stats = await getAdminStats();
+  const { data: stats } = await getAdminStats();
   
   const totalUsers = document.getElementById('totalUsers');
   const totalListings = document.getElementById('totalListings');
   const totalPayments = document.getElementById('totalPayments');
   const pendingReports = document.getElementById('pendingReports');
 
-  if (totalUsers) totalUsers.textContent = stats.users;
-  if (totalListings) totalListings.textContent = stats.listings;
-  if (totalPayments) totalPayments.textContent = stats.payments;
-  if (pendingReports) pendingReports.textContent = stats.reports;
+  if (totalUsers) totalUsers.textContent = stats?.totalUsers || 0;
+  if (totalListings) totalListings.textContent = stats?.totalListings || 0;
+  if (totalPayments) totalPayments.textContent = stats?.totalUnlocks || 0;
+  if (pendingReports) pendingReports.textContent = stats?.pendingReports || 0;
 }
 
 export async function loadUnverifiedLandlords() {
