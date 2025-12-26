@@ -25,81 +25,92 @@
   </header>
 
   <main style="padding: 8rem 0 4rem;">
-    <div class="container" style="max-width: 600px;">
-      <div class="card" style="padding: 2rem;">
-        <div style="text-align: center; margin-bottom: 2rem;">
-          <div style="width: 80px; height: 80px; background: rgba(37, 99, 235, 0.1); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
-            <i class="ri-lock-unlock-line" style="font-size: 2rem; color: var(--primary);"></i>
-          </div>
-          <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Unlock Contact</h1>
-          <p style="color: var(--text-secondary);">Pay to access the landlord's contact details</p>
-        </div>
-
-        <div style="background: var(--bg-secondary); padding: 1.25rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--text-secondary);">Unlock Fee</span>
-            <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">$2.50</span>
-          </div>
-        </div>
-
-        <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Select Payment Method</h3>
-        <form id="paymentForm">
-          <div class="payment-methods-grid">
-            <label class="payment-option selected">
-              <input type="radio" name="method" value="ecocash" checked>
-              <img src="/assets/images/payments/ecocash.png" alt="EcoCash" class="payment-logo">
-              <div class="payment-option-info">
-                <h4>EcoCash</h4>
-                <p>Pay via EcoCash</p>
-              </div>
-            </label>
-            <label class="payment-option">
-              <input type="radio" name="method" value="onemoney">
-              <img src="/assets/images/payments/onemoney.png" alt="OneMoney" class="payment-logo">
-              <div class="payment-option-info">
-                <h4>OneMoney</h4>
-                <p>Pay via OneMoney</p>
-              </div>
-            </label>
-            <label class="payment-option">
-              <input type="radio" name="method" value="mukuru">
-              <img src="/assets/images/payments/mukuru.png" alt="Mukuru" class="payment-logo">
-              <div class="payment-option-info">
-                <h4>Mukuru</h4>
-                <p>Pay via Mukuru</p>
-              </div>
-            </label>
-            <label class="payment-option">
-              <input type="radio" name="method" value="innbucks">
-              <img src="/assets/images/payments/innbucks.png" alt="InnBucks" class="payment-logo">
-              <div class="payment-option-info">
-                <h4>InnBucks</h4>
-                <p>Pay via InnBucks</p>
-              </div>
-            </label>
+    <div class="container" style="max-width: 800px;">
+      <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; align-items: start;">
+        <div class="card" style="padding: 2.5rem; border-radius: var(--radius-2xl);">
+          <div style="margin-bottom: 2.5rem;">
+            <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem; font-weight: 800;">Secure Checkout</h1>
+            <p style="color: var(--text-secondary);">Select your preferred local payment method</p>
           </div>
 
-          <div class="input-group" style="margin-top: 1.5rem;">
-            <label for="phone">Your Phone Number</label>
-            <div class="input-icon">
-              <i class="ri-phone-line"></i>
-              <input type="tel" id="phone" class="input" placeholder="+263 77 123 4567" required>
+          <form id="paymentForm">
+            <div class="payment-methods-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+              <label class="payment-option selected" style="display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 2px solid var(--primary); border-radius: var(--radius-xl); cursor: pointer; background: rgba(37, 99, 235, 0.05); transition: all 0.2s;">
+                <input type="radio" name="method" value="ecocash" checked style="width: 20px; height: 20px;">
+                <img src="/assets/images/payments/ecocash.png" alt="EcoCash" style="height: 40px; width: 40px; object-fit: contain; border-radius: 8px;">
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem;">EcoCash</h4>
+                  <p style="font-size: 0.9rem; color: var(--text-secondary);">Fast mobile money payment</p>
+                </div>
+              </label>
+
+              <label class="payment-option" style="display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: var(--radius-xl); cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="method" value="onemoney" style="width: 20px; height: 20px;">
+                <img src="/assets/images/payments/onemoney.png" alt="OneMoney" style="height: 40px; width: 40px; object-fit: contain; border-radius: 8px;">
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem;">OneMoney</h4>
+                  <p style="font-size: 0.9rem; color: var(--text-secondary);">NetOne mobile money</p>
+                </div>
+              </label>
+
+              <label class="payment-option" style="display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: var(--radius-xl); cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="method" value="mukuru" style="width: 20px; height: 20px;">
+                <img src="/assets/images/payments/mukuru.png" alt="Mukuru" style="height: 40px; width: 40px; object-fit: contain; border-radius: 8px;">
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem;">Mukuru</h4>
+                  <p style="font-size: 0.9rem; color: var(--text-secondary);">Direct cash transfer</p>
+                </div>
+              </label>
+
+              <label class="payment-option" style="display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 2px solid var(--border); border-radius: var(--radius-xl); cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="method" value="innbucks" style="width: 20px; height: 20px;">
+                <img src="/assets/images/payments/innbucks.png" alt="InnBucks" style="height: 40px; width: 40px; object-fit: contain; border-radius: 8px;">
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem;">InnBucks</h4>
+                  <p style="font-size: 0.9rem; color: var(--text-secondary);">Simunye InnBucks</p>
+                </div>
+              </label>
             </div>
-          </div>
 
-          <div style="margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-              <i class="ri-secure-payment-line"></i> Pay $2.50
-            </button>
-            <a href="javascript:history.back()" class="btn btn-ghost" style="width: 100%; margin-top: 0.5rem;">Cancel</a>
-          </div>
-        </form>
+            <div class="input-group" style="margin-top: 2rem;">
+              <label for="phone" style="font-weight: 600; margin-bottom: 0.75rem; display: block;">Payment Phone Number</label>
+              <div class="input-icon">
+                <i class="ri-phone-line"></i>
+                <input type="tel" id="phone" class="input" placeholder="+263 77 123 4567" required style="width: 100%; padding: 1rem 1rem 1rem 3rem; border-radius: var(--radius-lg); font-size: 1.1rem;">
+              </div>
+            </div>
 
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
-          <div style="display: flex; justify-content: center; gap: 2rem; color: var(--text-tertiary); font-size: 0.875rem;">
-            <span><i class="ri-shield-check-line"></i> Secure</span>
-            <span><i class="ri-lock-line"></i> Encrypted</span>
-            <span><i class="ri-verified-badge-line"></i> Verified</span>
+            <div style="margin-top: 2.5rem;">
+              <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 1.25rem; font-size: 1.1rem; border-radius: var(--radius-xl); box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);">
+                <i class="ri-secure-payment-line"></i> Complete Payment $2.50
+              </button>
+              <a href="javascript:history.back()" class="btn btn-ghost" style="width: 100%; margin-top: 1rem; color: var(--text-tertiary);">Back to Listing</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="summary-card" style="position: sticky; top: 100px;">
+          <div class="card" style="padding: 2rem; border-radius: var(--radius-2xl); background: var(--bg-secondary);">
+            <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700;">Order Summary</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Product</span>
+                <span style="font-weight: 600;">Landlord Contact Unlock</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Service Fee</span>
+                <span style="font-weight: 600;">$2.50</span>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem;">
+              <span style="font-size: 1.1rem; font-weight: 700;">Total Amount</span>
+              <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary);">$2.50</span>
+            </div>
+            
+            <div style="margin-top: 2rem; background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: var(--radius); display: flex; gap: 0.75rem; align-items: center;">
+              <i class="ri-shield-flash-line" style="font-size: 1.5rem; color: var(--success);"></i>
+              <p style="font-size: 0.85rem; color: #15803d; font-weight: 500;">Your transaction is protected by 256-bit SSL encryption</p>
+            </div>
           </div>
         </div>
       </div>

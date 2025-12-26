@@ -365,7 +365,7 @@
             <button class="btn btn-secondary" style="margin-right: 0.5rem;">
               <i class="ri-refresh-line"></i> Clear Cache
             </button>
-            <button class="btn btn-danger">
+            <button class="btn btn-danger" onclick="confirmReset()">
               <i class="ri-delete-bin-line"></i> Reset Database
             </button>
           </div>
@@ -375,7 +375,7 @@
   </div>
 
   <script type="module">
-    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../core/api/api.js';
+    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats, resetDatabase, approveListing } from '../core/api/api.js';
     import { showToast } from '../core/utils/toast.js';
     import { updateNavForAuth } from '../core/utils/navigation.js';
 
@@ -425,7 +425,7 @@
           <td>${user.verified ? '<span style="color: var(--success);">✓ Verified</span>' : '<span style="color: var(--text-secondary);">Pending</span>'}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
           <td>
-            <button class="action-btn" onclick="verifyUser('${user.id}')">
+            <button class="btn btn-sm btn-outline" onclick="verifyUser('${user.id}')">
               <i class="ri-verified-badge-fill"></i> Verify
             </button>
           </td>
@@ -449,12 +449,41 @@
           <td>${listing.type}</td>
           <td>$${listing.price}</td>
           <td>${listing.location}</td>
-          <td>${new Date(listing.created_at).toLocaleDateString()}</td>
           <td>
-            <button class="action-btn" onclick="viewListing('${listing.id}')">View</button>
+            <span class="badge ${listing.status === 'published' ? 'badge-success' : 'badge-warning'}">
+              ${listing.status || 'pending'}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-sm btn-outline" onclick="viewListing('${listing.id}')">View</button>
+              ${listing.status !== 'published' ? `<button class="btn btn-sm btn-success" onclick="verifyListing('${listing.id}')">Approve</button>` : ''}
+            </div>
           </td>
         </tr>
       `).join('');
+    }
+
+    window.verifyListing = async function(listingId) {
+      const { error } = await approveListing(listingId);
+      if (error) {
+        showToast('Error', 'Failed to approve listing', 'error');
+      } else {
+        showToast('Success', 'Listing approved and published', 'success');
+        loadListings();
+      }
+    }
+
+    window.confirmReset = async function() {
+      if (confirm('Are you absolutely sure you want to reset the database? ALL data will be lost.')) {
+        const { success, error } = await resetDatabase();
+        if (success) {
+          showToast('Success', 'Database reset successfully', 'success');
+          loadDashboard();
+        } else {
+          showToast('Error', 'Failed to reset database', 'error');
+        }
+      }
     }
 
     async function loadReports() {
