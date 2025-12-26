@@ -375,9 +375,9 @@
   </div>
 
   <script type="module">
-    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../src/api/api.js';
-    import { showToast } from '../src/utils/toast.js';
-    import { updateNavForAuth } from '../src/utils/navigation.js';
+    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats } from '../core/api/api.js';
+    import { showToast } from '../core/utils/toast.js';
+    import { updateNavForAuth } from '../core/utils/navigation.js';
 
     // Check admin access
     async function checkAdminAccess() {

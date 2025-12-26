@@ -95,10 +95,10 @@
     </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getSavedListings, getCurrentUser } from '/src/api/api.js';
-    import { logout } from '/src/auth/auth.js';
+    import { getSavedListings, getCurrentUser } from '/core/api/api.js';
+    import { logout } from '/core/auth/auth.js';
     window.logout = logout;
 
     let savedListings = [];

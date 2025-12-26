@@ -74,11 +74,11 @@
     </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getLandlordUnlocks, getCurrentUser, subscribeToUnlocks, unsubscribe } from '/src/api/api.js';
-    import { showToast } from '/src/utils/toast.js';
-    import { logout } from '/src/auth/auth.js';
+    import { getLandlordUnlocks, getCurrentUser, subscribeToUnlocks, unsubscribe } from '/core/api/api.js';
+    import { showToast } from '/core/utils/toast.js';
+    import { logout } from '/core/auth/auth.js';
     window.logout = logout;
 
     let subscription = null;

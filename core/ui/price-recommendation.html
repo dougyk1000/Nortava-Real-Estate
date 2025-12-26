@@ -1,7 +1,7 @@
 <div id="priceRecommendationWidget" style="display: none;"></div>
 <script>
   // Integrated into landlord-add.html form submission
-  import { calculateRecommendedPrice, renderPriceRecommendationWidget } from '../src/pricing/pricing.js';
+  import { calculateRecommendedPrice, renderPriceRecommendationWidget } from '../core/pricing/pricing.js';
 
   function showPriceRecommendation() {
     const title = document.getElementById('title')?.value || '';

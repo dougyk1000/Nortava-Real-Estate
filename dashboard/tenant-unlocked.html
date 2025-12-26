@@ -78,10 +78,10 @@
     </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getUnlockedContacts, getCurrentUser } from '/src/api/api.js';
-    import { logout } from '/src/auth/auth.js';
+    import { getUnlockedContacts, getCurrentUser } from '/core/api/api.js';
+    import { logout } from '/core/auth/auth.js';
     window.logout = logout;
 
     document.addEventListener('DOMContentLoaded', async () => {

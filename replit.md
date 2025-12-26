@@ -12,7 +12,7 @@ The platform is fully built with all UI components, pages, and JavaScript module
 │   ├── css/main.css          # Global styles, theme variables, components
 │   └── images/
 │       └── logo/             # Logo placeholder (user will add nortava-logo.jpg)
-├── src/
+├── core/
 │   ├── main.js               # Global initialization (theme, nav, chatbot)
 │   ├── api/api.js            # Central Supabase API - ALL database operations
 │   ├── auth/auth.js          # Authentication module
@@ -219,7 +219,7 @@ $$ LANGUAGE plpgsql;
   - Saved searches functionality
 - December 2024: Initial build of all pages and components
 - All pages created with professional dark/light theme support
-- Central API pattern implemented in src/api/api.js
+- Central API pattern implemented in core/api/api.js
 - Real-time subscriptions for listings and unlocks
 - Rule-based chatbot with FAQ responses
 

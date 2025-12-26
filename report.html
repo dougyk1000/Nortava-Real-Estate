@@ -116,10 +116,10 @@
     </div>
   </footer>
 
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="core/main.js"></script>
   <script type="module">
-    import { reportListing } from './src/api/api.js';
-    import { showToast } from './src/utils/toast.js';
+    import { reportListing } from './core/api/api.js';
+    import { showToast } from './core/utils/toast.js';
     
     document.getElementById('reportForm').addEventListener('submit', async (e) => {
       e.preventDefault();

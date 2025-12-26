@@ -88,10 +88,10 @@
     </div>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getPaymentHistory, getCurrentUser } from '/src/api/api.js';
-    import { logout } from '/src/auth/auth.js';
+    import { getPaymentHistory, getCurrentUser } from '/core/api/api.js';
+    import { logout } from '/core/auth/auth.js';
     window.logout = logout;
 
     async function init() {

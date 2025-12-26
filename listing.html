@@ -443,10 +443,10 @@
     <button class="gallery-nav next" onclick="nextImage()"><i class="ri-arrow-right-s-line"></i></button>
   </div>
 
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="core/main.js"></script>
   <script type="module">
-    import { getSingleListing, checkIfUnlocked, getListingReviews, createReview, getCurrentUser, incrementListingViews } from './src/api/api.js';
-    import { showToast } from './src/utils/toast.js';
+    import { getSingleListing, checkIfUnlocked, getListingReviews, createReview, getCurrentUser, incrementListingViews } from './core/api/api.js';
+    import { showToast } from './core/utils/toast.js';
 
     let listingId = null;
     let listingImages = [];
