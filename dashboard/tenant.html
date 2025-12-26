@@ -39,6 +39,24 @@
     </div>
   </header>
 
+  <nav class="mobile-nav">
+    <button class="mobile-nav-close" aria-label="Close menu">
+      <i class="ri-close-line"></i>
+    </button>
+    <ul class="mobile-nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/listings.html" class="nav-link">Browse</a></li>
+      <li><a href="/dashboard/tenant.html" class="nav-link active">Dashboard</a></li>
+      <li><a href="/dashboard/tenant-saved.html" class="nav-link">Saved Listings</a></li>
+      <li><a href="/dashboard/tenant-unlocked.html" class="nav-link">Unlocked Contacts</a></li>
+      <li><a href="/about.html" class="nav-link">About</a></li>
+      <li><a href="/contact.html" class="nav-link">Contact</a></li>
+    </ul>
+    <div class="mobile-nav-actions">
+      <button onclick="logout()" class="btn btn-secondary btn-lg"><i class="ri-logout-box-line"></i> Logout</button>
+    </div>
+  </nav>
+
   <div class="dashboard-layout">
     <div class="dashboard-container">
       <aside class="sidebar">
