@@ -167,22 +167,6 @@ img {
   align-items: center;
   gap: 0.5rem;
   list-style: none;
-  max-height: 80vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.nav-links::-webkit-scrollbar {
-  width: 4px;
-}
-
-.nav-links::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.nav-links::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: var(--radius-full);
 }
 
 .nav-link {
@@ -1908,6 +1892,17 @@ select.input {
   padding: 5rem 1.5rem 2rem;
   transform: translateX(100%);
   transition: transform var(--transition-slow);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-nav::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
 }
 
 .mobile-nav.active {
