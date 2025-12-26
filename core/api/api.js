@@ -105,6 +105,13 @@ export async function getAllListings(filters = {}) {
     users!user_id(name, phone, verified, verification_tier)
   `).order('created_at', { ascending: false })
   
+  // Only show published listings to normal users
+  const user = await getCurrentUser();
+  const adminEmail = 'douglasnkowo3036@gmail.com';
+  if (!user || user.email !== adminEmail) {
+    query = query.eq('status', 'published')
+  }
+
   if (filters.type) query = query.eq('type', filters.type)
   if (filters.min_price) query = query.gte('price', filters.min_price)
   if (filters.max_price) query = query.lte('price', filters.max_price)
@@ -141,10 +148,21 @@ export async function createListing(listingData) {
   const user = await getCurrentUser()
   if (!user) return { error: { message: 'Not authenticated' } }
   
+  // New listings start as 'pending'
   const { data, error } = await supabase.from('listings').insert({
     ...listingData,
-    user_id: user.id
+    user_id: user.id,
+    status: 'pending'
   }).select().maybeSingle()
+  
+  if (data) {
+    // Notify admin
+    const adminEmail = 'douglasnkowo3036@gmail.com';
+    const { data: admin } = await supabase.from('users').select('id').eq('email', adminEmail).maybeSingle();
+    if (admin) {
+      await createAdminNotification(admin.id, 'New Listing Pending', `A new listing "${listingData.title}" requires verification.`);
+    }
+  }
   
   return { data, error }
 }
@@ -309,12 +327,16 @@ export async function getAdminStats() {
   }
 }
 
+export async function getAllUsers() {
+  if (!checkSupabase()) return { data: [], error: null }
+  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false })
+  return { data: data || [], error }
+}
+
 export async function resetDatabase() {
   if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
   
   // This is a destructive action and should be handled with care
-  // In a real Supabase environment, you would use a management API or SQL
-  // Here we'll simulate it by clearing key tables
   const tables = ['unlocks', 'reports', 'reviews', 'saved_listings', 'listing_images', 'listings'];
   
   for (const table of tables) {
@@ -342,52 +364,6 @@ export async function approveListing(listingId) {
   return { data, error }
 }
 
-export async function createListing(listingData) {
-  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
-  const user = await getCurrentUser()
-  if (!user) return { error: { message: 'Not authenticated' } }
-  
-  // New listings start as 'pending'
-  const { data, error } = await supabase.from('listings').insert({
-    ...listingData,
-    user_id: user.id,
-    status: 'pending'
-  }).select().maybeSingle()
-  
-  if (data) {
-    // Notify admin
-    const adminEmail = 'douglasnkowo3036@gmail.com';
-    const { data: admin } = await supabase.from('users').select('id').eq('email', adminEmail).maybeSingle();
-    if (admin) {
-      await createAdminNotification(admin.id, 'New Listing Pending', `A new listing "${listingData.title}" requires verification.`);
-    }
-  }
-  
-  return { data, error }
-}
-
-export async function getAllListings(filters = {}) {
-  if (!checkSupabase()) return { data: [], error: null }
-  
-  let query = supabase.from('listings').select(`
-    *,
-    listing_images(*),
-    users!user_id(name, phone, verified, verification_tier)
-  `).order('created_at', { ascending: false })
-  
-  // Only show published listings to normal users
-  const user = await getCurrentUser();
-  const adminEmail = 'douglasnkowo3036@gmail.com';
-  if (!user || user.email !== adminEmail) {
-    query = query.eq('status', 'published')
-  }
-
-  if (filters.type) query = query.eq('type', filters.type)
-  if (!checkSupabase()) return { data: [], error: null }
-  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false })
-  return { data: data || [], error }
-}
-
 export async function verifyLandlord(userId) {
   if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
   const { data, error } = await supabase.from('users').update({ verified: true }).eq('id', userId).select().maybeSingle()
@@ -405,6 +381,7 @@ export async function updateReportStatus(reportId, status) {
   const { data, error } = await supabase.from('reports').update({ status }).eq('id', reportId).select().maybeSingle()
   return { data, error }
 }
+
 // --- REVIEWS & RATINGS ---
 export async function createReview(listingId, rating, comment) {
   if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
@@ -433,13 +410,13 @@ export async function getLandlordReviews(landlordId) {
   if (!listings?.length) return { data: [], error: null }
   
   const listingIds = listings.map(l => l.id)
-  const { data, error } = await supabase.from('reviews').select('*, users(name), listings(title)').in('listing_id', listingIds).order('created_at', { ascending: false })
+  const { data, error = await supabase.from('reviews').select('*, users(name), listings(title)').in('listing_id', listingIds).order('created_at', { ascending: false })
   return { data: data || [], error }
 }
 
 export async function getAverageRating(listingId) {
   if (!checkSupabase()) return { data: 0, error: null }
-  const { data, error } = await supabase.from('reviews').select('rating').eq('listing_id', listingId)
+  const { data, error = await supabase.from('reviews').select('rating').eq('listing_id', listingId)
   if (!data?.length) return { data: 0, error }
   
   const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length
@@ -449,7 +426,7 @@ export async function getAverageRating(listingId) {
 // --- PAYMENT HISTORY ---
 export async function getPaymentHistory(userId) {
   if (!checkSupabase()) return { data: [], error: null }
-  const { data, error } = await supabase.from('unlocks').select('*, listings(title, location, listing_images(*))').eq('user_id', userId).order('unlocked_at', { ascending: false })
+  const { data, error = await supabase.from('unlocks').select('*, listings(title, location, listing_images(*))').eq('user_id', userId).order('unlocked_at', { ascending: false })
   return { data: data || [], error }
 }
 
