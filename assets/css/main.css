@@ -1102,18 +1102,52 @@ select.input {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  background: var(--bg-secondary);
+  padding: 2rem 1rem;
+  background: var(--bg-tertiary);
 }
 
 .auth-card {
   width: 100%;
   max-width: 440px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
   padding: 2.5rem;
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+}
+
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 0;
+    align-items: flex-start;
+    background: var(--bg-card);
+  }
+  
+  .auth-card {
+    padding: 2rem 1.5rem;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    min-height: 100vh;
+  }
+
+  .auth-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .role-select {
+    grid-template-columns: 1fr;
+  }
+
+  .role-option {
+    padding: 1rem;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: flex-start;
+  }
+
+  .role-option i {
+    font-size: 1.5rem;
+  }
 }
 
 .auth-header {
