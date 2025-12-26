@@ -480,3 +480,37 @@ export async function getUnreadNotifications(userId) {
   const { data, error } = await supabase.from('notifications').select('*').eq('user_id', userId).eq('read', false).order('created_at', { ascending: false })
   return { data: data || [], error }
 }
+
+// --- PAYMENTS ---
+export async function createPayment(listingId, amount, method) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  const user = await getCurrentUser()
+  if (!user) return { error: { message: 'Not authenticated' } }
+  
+  const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(7)}`
+  
+  const { data, error } = await supabase.from('unlocks').insert({
+    user_id: user.id,
+    listing_id: listingId,
+    amount: amount,
+    payment_method: method,
+    payment_ref: reference,
+    status: 'pending'
+  }).select().maybeSingle()
+  
+  if (error) return { data: null, error }
+  return { data: { ...data, reference }, error: null }
+}
+
+export async function verifyPayment(reference) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  
+  const { data, error } = await supabase.from('unlocks')
+    .update({ status: 'completed' })
+    .eq('payment_ref', reference)
+    .select()
+    .maybeSingle()
+  
+  if (error) return { data: null, error }
+  return { data, error: null }
+}
