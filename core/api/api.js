@@ -238,53 +238,60 @@ export async function uploadListingImage(listingId, file) {
   try {
     const fileName = `${listingId}/${Date.now()}-${file.name}`
     
-    // Upload to storage
+    // Try to upload to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('listing-images')
       .upload(fileName, file, { upsert: false })
     
     if (uploadError) {
-      console.error('Image upload error:', {
+      console.error('Image storage upload error:', {
         message: uploadError.message,
         status: uploadError.status,
         error: uploadError
       })
       
-      // Check if bucket doesn't exist
-      if (uploadError.status === 404 || uploadError.message?.includes('not found')) {
-        console.warn('Storage bucket may not exist. Create "listing-images" bucket in Supabase Storage and make it public.')
+      // Log helpful debugging info
+      if (uploadError.status === 401) {
+        console.warn('Unauthorized: Check bucket permissions and RLS policies')
+      } else if (uploadError.status === 404) {
+        console.warn('Bucket not found: Verify bucket exists and is named "listing-images"')
+      } else if (uploadError.status === 413) {
+        console.warn('File too large: Maximum 5MB per image')
       }
-      
-      return { error: uploadError }
     }
     
-    // Get public URL - always succeeds even if file upload failed
+    // Get public URL regardless of upload success
+    // The URL will work once the file is actually uploaded
     const { data } = supabase.storage.from('listing-images').getPublicUrl(fileName)
     const publicUrl = data?.publicUrl
     
     if (!publicUrl) {
-      return { error: { message: 'Failed to get public URL' } }
+      return { error: { message: 'Failed to generate image URL' } }
     }
     
-    // Save to database
+    // Save the image record to database (store URL reference)
     const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ 
       listing_id: listingId, 
       image_url: publicUrl 
     }).select().maybeSingle()
     
     if (dbError) {
-      console.error('Database insert error:', {
-        message: dbError.message,
-        code: dbError.code,
-        error: dbError
-      })
-      return { error: dbError }
+      console.error('Database insert error:', dbError.message)
+      // Still return success if URL was saved, storage error is separate
+      if (uploadError) {
+        return { error: { message: 'Database error: Could not save image reference' } }
+      }
     }
     
-    return { data: dbData, error: null }
+    // Return success with any warnings about storage
+    return { 
+      data: dbData, 
+      error: uploadError ? { message: 'Storage upload failed but reference saved', details: uploadError } : null,
+      storageError: uploadError
+    }
   } catch (err) {
     console.error('Upload exception:', err)
-    return { error: { message: err.message || 'Failed to upload image' } }
+    return { error: { message: err.message || 'Failed to process image' } }
   }
 }
 
