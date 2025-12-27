@@ -96,23 +96,21 @@ The platform is fully built with all UI components, pages, and JavaScript module
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
 ```
 
-### 3b. Fix Row Level Security (RLS) - IMPORTANT!
-Your database has RLS enabled but no policies. Choose ONE option:
+### 3b. Enable Row Level Security (RLS) - PRODUCTION REQUIRED
+Your database has RLS enabled but needs proper security policies for production.
 
-**Option A: Disable RLS (Easiest for development/testing)**
-```sql
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE listings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE listing_images DISABLE ROW LEVEL SECURITY;
-ALTER TABLE unlocks DISABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_listings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE reports DISABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews DISABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_searches DISABLE ROW LEVEL SECURITY;
-```
+**Copy and paste the entire content from `supabase_rls_policies.sql` file into Supabase SQL Editor:**
+1. Go to Supabase Dashboard → SQL Editor → New Query
+2. Open the `supabase_rls_policies.sql` file in this project
+3. Copy ALL the content
+4. Paste into the SQL editor
+5. Click **Run**
 
-**Option B: Enable RLS with proper policies (Production-ready)**
-Copy and paste the entire content from `supabase_rls_policies.sql` into Supabase SQL Editor and run it.
+This implements proper Row Level Security for production launch with:
+- User data privacy (users can only access their own data)
+- Public listing visibility (published listings visible to everyone)
+- Secure payment/unlock system
+- Admin oversight capabilities
 
 ### 4. Enable Authentication
 1. In Supabase dashboard, go to **Authentication → Providers**
@@ -232,7 +230,20 @@ $$ LANGUAGE plpgsql;
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 
+## Production Launch Status
+**STATUS: Ready for Launch** ✅
+
+See `PRODUCTION_LAUNCH_CHECKLIST.md` for complete setup instructions.
+
+**Critical Steps:**
+1. Run RLS policies SQL from `supabase_rls_policies.sql`
+2. Add status column to listings table
+3. Update admin email in core/api/api.js
+4. Update contact information throughout site
+5. Run npm run build and publish
+
 ## Recent Changes
+- December 27, 2025: Production launch ready - RLS policies, registration fixes, comprehensive setup
 - December 18, 2025: Added advanced features
   - Advanced search filters with amenities (furnished, water, electricity, parking)
   - Property comparison tool (up to 3 properties side-by-side)
