@@ -612,3 +612,19 @@ export async function verifyPayment(reference) {
   if (error) return { data: null, error }
   return { data, error: null }
 }
+
+// --- REPORT LISTING ---
+export async function reportListing(listingId, reason, details) {
+  if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
+  const user = await getCurrentUser()
+  
+  const { data, error } = await supabase.from('reports').insert({
+    listing_id: listingId,
+    user_id: user?.id || null,
+    reason,
+    details,
+    status: 'pending'
+  }).select().maybeSingle()
+  
+  return { data, error }
+}
