@@ -296,13 +296,24 @@
         return;
       }
 
-      // Upload images in background (optional - don't block listing creation)
-      if (uploadedFiles.length > 0) {
-        uploadedFiles.forEach(file => {
-          uploadListingImage(listing.id, file).catch(err => {
-            console.error('Background image upload failed:', err);
-          });
-        });
+      // Upload images (required)
+      let hasImageError = false;
+      for (const file of uploadedFiles) {
+        const { error: imgError } = await uploadListingImage(listing.id, file);
+        if (imgError) {
+          console.error('Image upload failed:', imgError);
+          hasImageError = true;
+          showToast('Error', `Failed to upload image: ${file.name}`, 'error');
+          break;
+        }
+      }
+      
+      if (hasImageError) {
+        // Delete the listing if images failed
+        await fetch(`/api/listings/${listing.id}`, { method: 'DELETE' }).catch(() => {});
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="ri-check-line"></i> Publish Listing';
+        return;
       }
 
       showToast('Success', 'Your listing has been published!', 'success');

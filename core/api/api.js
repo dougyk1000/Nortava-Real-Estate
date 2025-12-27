@@ -241,34 +241,40 @@ export async function uploadListingImage(listingId, file) {
     // Upload to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('listing-images')
-      .upload(fileName, file, { upsert: false })
+      .upload(fileName, file, { upsert: true })
     
     if (uploadError) {
-      // Log error but don't fail - images are optional
-      console.error('Image upload failed:', uploadError.message)
-      return { error: null, warning: 'Image upload failed but listing was created' }
+      console.error('Storage upload error:', {
+        message: uploadError.message,
+        status: uploadError.status,
+        statusText: uploadError.statusText
+      })
+      return { error: uploadError }
     }
     
     // Get public URL
     const { data } = supabase.storage.from('listing-images').getPublicUrl(fileName)
-    const publicUrl = data?.publicUrl || ''
+    const publicUrl = data?.publicUrl
     
-    // Save image reference to database
-    if (publicUrl) {
-      const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ 
-        listing_id: listingId, 
-        image_url: publicUrl 
-      }).select().maybeSingle()
-      
-      if (!dbError) {
-        return { data: dbData, error: null }
-      }
+    if (!publicUrl) {
+      return { error: { message: 'Failed to generate public URL' } }
     }
     
-    return { error: null }
+    // Save image reference to database
+    const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ 
+      listing_id: listingId, 
+      image_url: publicUrl 
+    }).select().maybeSingle()
+    
+    if (dbError) {
+      console.error('Database error:', dbError)
+      return { error: dbError }
+    }
+    
+    return { data: dbData, error: null }
   } catch (err) {
-    console.error('Upload error:', err)
-    return { error: null }
+    console.error('Upload exception:', err)
+    return { error: { message: err.message || 'Upload failed' } }
   }
 }
 
