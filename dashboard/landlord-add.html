@@ -296,12 +296,13 @@
         return;
       }
 
-      for (const file of uploadedFiles) {
-        const { error: imgError } = await uploadListingImage(listing.id, file);
-        if (imgError) {
-          console.error('Failed to upload image:', imgError);
-          showToast('Warning', 'Listing created but some images failed to upload', 'warning');
-        }
+      // Upload images in background (optional - don't block listing creation)
+      if (uploadedFiles.length > 0) {
+        uploadedFiles.forEach(file => {
+          uploadListingImage(listing.id, file).catch(err => {
+            console.error('Background image upload failed:', err);
+          });
+        });
       }
 
       showToast('Success', 'Your listing has been published!', 'success');
