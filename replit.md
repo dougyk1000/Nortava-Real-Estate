@@ -90,12 +90,18 @@ The platform is fully built with all UI components, pages, and JavaScript module
 4. Paste it into the SQL editor and click **Run**
 5. Wait for all tables to be created successfully
 
-### 3. Enable Authentication
+### 3. Add Missing Status Column
+1. If you see errors about missing "status" column on listings, run this in Supabase SQL Editor:
+```sql
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
+```
+
+### 4. Enable Authentication
 1. In Supabase dashboard, go to **Authentication → Providers**
 2. Make sure **Email** provider is enabled (it is by default)
 3. You can also enable other providers (Google, GitHub, etc.) if needed
 
-### 4. Test Login/Signup
+### 5. Test Login/Signup
 1. The app should now be fully functional
 2. Visit the signup page to create an account
 3. Login with your credentials
@@ -134,6 +140,7 @@ CREATE TABLE listings (
   water BOOLEAN DEFAULT false,
   electricity BOOLEAN DEFAULT false,
   parking BOOLEAN DEFAULT false,
+  status TEXT DEFAULT 'draft', -- draft, pending, published
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
