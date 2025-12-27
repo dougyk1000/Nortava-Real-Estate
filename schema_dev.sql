@@ -1,10 +1,8 @@
--- ===== NORTAVA DATABASE SCHEMA =====
--- Copy and paste this entire script into your Supabase SQL Editor
--- Go to: Supabase Dashboard → Your Project → SQL Editor → New Query
+-- ===== NORTAVA DATABASE SCHEMA (Development) =====
 
--- Users (extends Supabase auth)
+-- Users table (without auth.users dependency)
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   phone TEXT,
