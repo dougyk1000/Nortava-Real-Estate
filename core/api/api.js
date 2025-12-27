@@ -36,23 +36,41 @@ export async function registerUser(email, password, name, role, phone = '') {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, role, phone } } // role stored in auth metadata
+    options: { data: { name, role, phone } }
   })
   if (error) return { data: null, error }
   
   if (data?.user) {
-    // Create user profile in users table
-    const { data: userProfile, error: profileError } = await supabase.from('users').insert({
-      id: data.user.id,
-      email,
-      name,
-      role,
-      phone
-    }).select().maybeSingle()
+    // Retry user profile creation with delay
+    let profileError = null
+    let userProfile = null
+    
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const result = await supabase.from('users').insert({
+        id: data.user.id,
+        email,
+        name,
+        role: role || 'tenant',
+        phone
+      }).select().maybeSingle()
+      
+      if (!result.error) {
+        userProfile = result.data
+        break
+      }
+      
+      profileError = result.error
+      console.error(`Profile creation attempt ${attempt + 1} failed:`, profileError)
+      
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 500))
+      }
+    }
     
     if (profileError) {
-      console.error('Profile creation error:', profileError)
-      return { data: null, error: profileError }
+      console.error('CRITICAL: User profile creation failed after 3 attempts:', profileError)
+      console.error('Make sure RLS policies are properly enabled in Supabase!')
+      return { data: null, error: { message: `Registration failed. Make sure RLS policies are enabled: ${profileError.message}` } }
     }
     
     const userData = { ...data.user, ...userProfile }
@@ -153,6 +171,10 @@ export async function createListing(listingData) {
   if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
   const user = await getCurrentUser()
   if (!user) return { error: { message: 'Not authenticated' } }
+  if (!user.id) {
+    console.error('CRITICAL: User ID missing. User object:', user)
+    return { error: { message: 'User ID not found - registration may have failed. Try logging out and registering again.' } }
+  }
   
   // New listings start as 'pending'
   const { data, error } = await supabase.from('listings').insert({
@@ -160,6 +182,13 @@ export async function createListing(listingData) {
     user_id: user.id,
     status: 'pending'
   }).select().maybeSingle()
+  
+  if (error) {
+    console.error('Listing creation error:', error)
+    if (error.message.includes('foreign key')) {
+      console.error('User ID does not exist in users table:', user.id)
+    }
+  }
   
   if (data) {
     // Notify admin
