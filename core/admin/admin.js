@@ -5,17 +5,25 @@ import { logout } from '../auth/auth.js';
 window.logout = logout;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    showToast('Access Denied', 'Admin access required', 'error');
+  try {
+    const user = await getCurrentUser();
+    
+    if (!user || user.role !== 'admin') {
+      showToast('Access Denied', 'Admin access required', 'error');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+      return;
+    }
+
+    loadAdminDashboard();
+  } catch (err) {
+    console.error('Admin auth error:', err);
+    showToast('Error', 'Failed to load admin dashboard', 'error');
     setTimeout(() => {
       window.location.href = '/';
     }, 1500);
-    return;
   }
-
-  loadAdminDashboard();
 });
 
 async function loadAdminDashboard() {

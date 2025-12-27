@@ -466,6 +466,13 @@ export async function createReview(listingId, rating, comment) {
   const user = await getCurrentUser()
   if (!user) return { error: { message: 'Not authenticated' } }
   
+  // Ensure user profile exists in database before creating review
+  const userProfile = await getUserProfile(user.id)
+  if (!userProfile) {
+    // Create profile if it doesn't exist
+    await createUserProfile(user.id, user.email, user.name, user.role)
+  }
+  
   const { data, error } = await supabase.from('reviews').insert({
     listing_id: listingId,
     user_id: user.id,
