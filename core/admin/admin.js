@@ -7,8 +7,11 @@ window.logout = logout;
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const user = await getCurrentUser();
+    const adminEmail = 'douglasnkowo3036@gmail.com';
     
-    if (!user || user.role !== 'admin') {
+    // Allow admin by role OR by admin email
+    const isAdmin = user && (user.role === 'admin' || user.email === adminEmail);
+    if (!isAdmin) {
       showToast('Access Denied', 'Admin access required', 'error');
       setTimeout(() => {
         window.location.href = '/';
