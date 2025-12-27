@@ -41,7 +41,8 @@ export async function registerUser(email, password, name, role, phone = '') {
   if (error) return { data: null, error }
   
   if (data?.user) {
-    await supabase.from('users').insert({
+    // Create user profile in users table
+    const { data: userProfile, error: profileError } = await supabase.from('users').insert({
       id: data.user.id,
       email,
       name,
@@ -49,7 +50,12 @@ export async function registerUser(email, password, name, role, phone = '') {
       phone
     }).select().maybeSingle()
     
-    const userData = { ...data.user, name, role, phone }
+    if (profileError) {
+      console.error('Profile creation error:', profileError)
+      return { data: null, error: profileError }
+    }
+    
+    const userData = { ...data.user, ...userProfile }
     localStorage.setItem('nortava-user', JSON.stringify(userData))
   }
   

@@ -96,6 +96,24 @@ The platform is fully built with all UI components, pages, and JavaScript module
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
 ```
 
+### 3b. Fix Row Level Security (RLS) - IMPORTANT!
+Your database has RLS enabled but no policies. Choose ONE option:
+
+**Option A: Disable RLS (Easiest for development/testing)**
+```sql
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE listings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE listing_images DISABLE ROW LEVEL SECURITY;
+ALTER TABLE unlocks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_listings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE reports DISABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_searches DISABLE ROW LEVEL SECURITY;
+```
+
+**Option B: Enable RLS with proper policies (Production-ready)**
+Copy and paste the entire content from `supabase_rls_policies.sql` into Supabase SQL Editor and run it.
+
 ### 4. Enable Authentication
 1. In Supabase dashboard, go to **Authentication → Providers**
 2. Make sure **Email** provider is enabled (it is by default)
