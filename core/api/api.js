@@ -41,43 +41,50 @@ export async function registerUser(email, password, name, role, phone = '') {
   if (error) return { data: null, error }
   
   if (data?.user) {
-    // Retry user profile creation with delay
-    let profileError = null
-    let userProfile = null
-    
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const result = await supabase.from('users').insert({
-        id: data.user.id,
-        email,
-        name,
-        role: role || 'tenant',
-        phone
-      }).select().maybeSingle()
-      
-      if (!result.error) {
-        userProfile = result.data
-        break
-      }
-      
-      profileError = result.error
-      console.error(`Profile creation attempt ${attempt + 1} failed:`, profileError)
-      
-      if (attempt < 2) {
-        await new Promise(r => setTimeout(r, 500))
-      }
+    // Store in localStorage first - profile will be created lazily on first use
+    const userData = { 
+      id: data.user.id,
+      email,
+      name,
+      role: role || 'tenant',
+      phone,
+      user_metadata: data.user.user_metadata
     }
-    
-    if (profileError) {
-      console.error('CRITICAL: User profile creation failed after 3 attempts:', profileError)
-      console.error('Make sure RLS policies are properly enabled in Supabase!')
-      return { data: null, error: { message: `Registration failed. Make sure RLS policies are enabled: ${profileError.message}` } }
-    }
-    
-    const userData = { ...data.user, ...userProfile }
     localStorage.setItem('nortava-user', JSON.stringify(userData))
+    
+    // Try to create profile in background, but don't fail registration if it doesn't work
+    setTimeout(() => {
+      createUserProfile(data.user.id, email, name, role, phone)
+        .catch(err => console.log('Background profile creation will retry on first use:', err.message))
+    }, 100)
   }
   
   return { data, error }
+}
+
+// Helper function to create or update user profile
+async function createUserProfile(userId, email, name, role, phone) {
+  if (!checkSupabase()) return null
+  
+  try {
+    // Try upsert instead of insert to avoid conflicts
+    const { data, error } = await supabase.from('users').upsert({
+      id: userId,
+      email,
+      name: name || email.split('@')[0],
+      role: role || 'tenant',
+      phone: phone || null
+    }, { onConflict: 'id' }).select().maybeSingle()
+    
+    if (error) {
+      console.error('User profile creation error:', error)
+      return null
+    }
+    return data
+  } catch (err) {
+    console.error('User profile creation failed:', err)
+    return null
+  }
 }
 
 export async function logoutUser() {
@@ -176,6 +183,9 @@ export async function createListing(listingData) {
     return { error: { message: 'User ID not found - registration may have failed. Try logging out and registering again.' } }
   }
   
+  // Ensure user profile exists before creating listing
+  const profileCreated = await createUserProfile(user.id, user.email, user.name, user.role, user.phone)
+  
   // New listings start as 'pending'
   const { data, error } = await supabase.from('listings').insert({
     ...listingData,
@@ -186,7 +196,8 @@ export async function createListing(listingData) {
   if (error) {
     console.error('Listing creation error:', error)
     if (error.message.includes('foreign key')) {
-      console.error('User ID does not exist in users table:', user.id)
+      console.error('User ID does not exist in users table:', user.id, '- profile creation may have failed')
+      return { data: null, error: { message: 'Please log out and log back in, then try again.' } }
     }
   }
   
