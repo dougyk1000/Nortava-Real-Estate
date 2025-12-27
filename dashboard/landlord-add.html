@@ -297,7 +297,11 @@
       }
 
       for (const file of uploadedFiles) {
-        await uploadListingImage(listing.id, file);
+        const { error: imgError } = await uploadListingImage(listing.id, file);
+        if (imgError) {
+          console.error('Failed to upload image:', imgError);
+          showToast('Warning', 'Listing created but some images failed to upload', 'warning');
+        }
       }
 
       showToast('Success', 'Your listing has been published!', 'success');

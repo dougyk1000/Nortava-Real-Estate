@@ -235,15 +235,40 @@ export async function getLandlordListings(landlordId) {
 export async function uploadListingImage(listingId, file) {
   if (!checkSupabase()) return { error: { message: 'Supabase not configured' } }
   
-  const fileName = `${listingId}/${Date.now()}-${file.name}`
-  const { data: uploadData, error: uploadError } = await supabase.storage.from('listing-images').upload(fileName, file)
-  if (uploadError) return { error: uploadError }
-  
-  const { data } = supabase.storage.from('listing-images').getPublicUrl(fileName)
-  const publicUrl = data?.publicUrl
-  
-  const { data: dbData, error } = await supabase.from('listing_images').insert({ listing_id: listingId, image_url: publicUrl }).select().maybeSingle()
-  return { data: dbData, error }
+  try {
+    const fileName = `${listingId}/${Date.now()}-${file.name}`
+    
+    // Upload to storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('listing-images')
+      .upload(fileName, file, { upsert: false })
+    
+    if (uploadError) {
+      console.error('Image upload error:', uploadError)
+      return { error: uploadError }
+    }
+    
+    // Get public URL
+    const { data } = supabase.storage.from('listing-images').getPublicUrl(fileName)
+    const publicUrl = data?.publicUrl
+    
+    if (!publicUrl) {
+      return { error: { message: 'Failed to get public URL' } }
+    }
+    
+    // Save to database
+    const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ listing_id: listingId, image_url: publicUrl }).select().maybeSingle()
+    
+    if (dbError) {
+      console.error('Database insert error:', dbError)
+      return { error: dbError }
+    }
+    
+    return { data: dbData, error: null }
+  } catch (err) {
+    console.error('Upload exception:', err)
+    return { error: { message: err.message } }
+  }
 }
 
 export async function deleteListingImage(imageId) {
