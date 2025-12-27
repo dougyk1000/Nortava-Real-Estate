@@ -410,13 +410,13 @@ export async function getLandlordReviews(landlordId) {
   if (!listings?.length) return { data: [], error: null }
   
   const listingIds = listings.map(l => l.id)
-  const { data, error = await supabase.from('reviews').select('*, users(name), listings(title)').in('listing_id', listingIds).order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('reviews').select('*, users(name), listings(title)').in('listing_id', listingIds).order('created_at', { ascending: false })
   return { data: data || [], error }
 }
 
 export async function getAverageRating(listingId) {
   if (!checkSupabase()) return { data: 0, error: null }
-  const { data, error = await supabase.from('reviews').select('rating').eq('listing_id', listingId)
+  const { data, error } = await supabase.from('reviews').select('rating').eq('listing_id', listingId)
   if (!data?.length) return { data: 0, error }
   
   const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length
@@ -426,7 +426,7 @@ export async function getAverageRating(listingId) {
 // --- PAYMENT HISTORY ---
 export async function getPaymentHistory(userId) {
   if (!checkSupabase()) return { data: [], error: null }
-  const { data, error = await supabase.from('unlocks').select('*, listings(title, location, listing_images(*))').eq('user_id', userId).order('unlocked_at', { ascending: false })
+  const { data, error } = await supabase.from('unlocks').select('*, listings(title, location, listing_images(*))').eq('user_id', userId).order('unlocked_at', { ascending: false })
   return { data: data || [], error }
 }
 
