@@ -244,11 +244,21 @@ export async function uploadListingImage(listingId, file) {
       .upload(fileName, file, { upsert: false })
     
     if (uploadError) {
-      console.error('Image upload error:', uploadError)
+      console.error('Image upload error:', {
+        message: uploadError.message,
+        status: uploadError.status,
+        error: uploadError
+      })
+      
+      // Check if bucket doesn't exist
+      if (uploadError.status === 404 || uploadError.message?.includes('not found')) {
+        console.warn('Storage bucket may not exist. Create "listing-images" bucket in Supabase Storage and make it public.')
+      }
+      
       return { error: uploadError }
     }
     
-    // Get public URL
+    // Get public URL - always succeeds even if file upload failed
     const { data } = supabase.storage.from('listing-images').getPublicUrl(fileName)
     const publicUrl = data?.publicUrl
     
@@ -257,17 +267,24 @@ export async function uploadListingImage(listingId, file) {
     }
     
     // Save to database
-    const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ listing_id: listingId, image_url: publicUrl }).select().maybeSingle()
+    const { data: dbData, error: dbError } = await supabase.from('listing_images').insert({ 
+      listing_id: listingId, 
+      image_url: publicUrl 
+    }).select().maybeSingle()
     
     if (dbError) {
-      console.error('Database insert error:', dbError)
+      console.error('Database insert error:', {
+        message: dbError.message,
+        code: dbError.code,
+        error: dbError
+      })
       return { error: dbError }
     }
     
     return { data: dbData, error: null }
   } catch (err) {
     console.error('Upload exception:', err)
-    return { error: { message: err.message } }
+    return { error: { message: err.message || 'Failed to upload image' } }
   }
 }
 
