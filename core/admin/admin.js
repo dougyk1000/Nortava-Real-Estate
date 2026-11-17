@@ -1,55 +1,65 @@
-import { getAdminStats, getAllUsers, verifyLandlord, getReports, updateReportStatus, getCurrentUser } from '../api/api.js';
+import { getAdminOverview, verifyLandlord, updateReportStatus, verifyAdminSession } from '../api/api.js';
 import { showToast } from '../utils/toast.js';
 import { logout } from '../auth/auth.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 window.logout = logout;
+window.logoutAdmin = logout;
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const user = await getCurrentUser();
-    const adminEmail = 'douglasnkowo3036@gmail.com';
-    
-    // Allow admin by role OR by admin email
-    const isAdmin = user && (user.role === 'admin' || user.email === adminEmail);
-    if (!isAdmin) {
+    const adminCheck = await verifyAdminSession();
+    if (!adminCheck?.isAdmin) {
       showToast('Access Denied', 'Admin access required', 'error');
       setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
+        window.location.href = '/auth/login.html';
+      }, 1200);
       return;
     }
 
-    loadAdminDashboard();
-  } catch (err) {
-    console.error('Admin auth error:', err);
-    showToast('Error', 'Failed to load admin dashboard', 'error');
+    await loadAdminDashboard();
+
+    if (window.location.pathname.includes('verify-landlords')) {
+      await loadUnverifiedLandlords();
+    }
+    if (window.location.pathname.includes('reports')) {
+      await loadReports();
+    }
+  } catch {
+    showToast('Error', 'Failed to verify admin access', 'error');
     setTimeout(() => {
-      window.location.href = '/';
-    }, 1500);
+      window.location.href = '/auth/login.html';
+    }, 1200);
   }
 });
 
 async function loadAdminDashboard() {
-  const { data: stats } = await getAdminStats();
-  
+  const { data: overview, error } = await getAdminOverview();
+  if (error || !overview) return;
+
+  const stats = overview.stats || {};
   const totalUsers = document.getElementById('totalUsers');
   const totalListings = document.getElementById('totalListings');
   const totalPayments = document.getElementById('totalPayments');
   const pendingReports = document.getElementById('pendingReports');
 
-  if (totalUsers) totalUsers.textContent = stats?.totalUsers || 0;
-  if (totalListings) totalListings.textContent = stats?.totalListings || 0;
-  if (totalPayments) totalPayments.textContent = stats?.totalUnlocks || 0;
-  if (pendingReports) pendingReports.textContent = stats?.pendingReports || 0;
+  if (totalUsers) totalUsers.textContent = String(stats.totalUsers || 0);
+  if (totalListings) totalListings.textContent = String(stats.totalListings || 0);
+  if (totalPayments) totalPayments.textContent = String(stats.totalUnlocks || 0);
+  if (pendingReports) pendingReports.textContent = String(stats.pendingReports || 0);
 }
 
 export async function loadUnverifiedLandlords() {
-  const { data: users } = await getAllUsers();
-  const landlords = users?.filter(u => u.role === 'landlord' && !u.verified) || [];
-  
+  const { data: overview, error } = await getAdminOverview();
   const container = document.getElementById('landlordsList');
   if (!container) return;
 
+  if (error || !overview) {
+    container.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">Unable to load landlords</p>';
+    return;
+  }
+
+  const landlords = (overview.users || []).filter(u => u.role === 'landlord' && !u.verified);
   if (landlords.length === 0) {
     container.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No landlords pending verification</p>';
     return;
@@ -69,12 +79,12 @@ export async function loadUnverifiedLandlords() {
       <tbody>
         ${landlords.map(landlord => `
           <tr>
-            <td>${landlord.name || 'N/A'}</td>
-            <td>${landlord.email}</td>
-            <td>${landlord.phone || 'N/A'}</td>
-            <td>${new Date(landlord.created_at).toLocaleDateString()}</td>
+            <td>${escapeHtml(landlord.name || 'N/A')}</td>
+            <td>${escapeHtml(landlord.email)}</td>
+            <td>${escapeHtml(landlord.phone || 'N/A')}</td>
+            <td>${escapeHtml(new Date(landlord.created_at).toLocaleDateString())}</td>
             <td>
-              <button class="btn btn-sm btn-success" onclick="verifyLandlordAction('${landlord.id}')">
+              <button type="button" class="btn btn-sm btn-success" data-verify-id="${escapeHtml(landlord.id)}">
                 <i class="ri-check-line"></i> Verify
               </button>
             </td>
@@ -83,27 +93,34 @@ export async function loadUnverifiedLandlords() {
       </tbody>
     </table>
   `;
+
+  container.querySelectorAll('[data-verify-id]').forEach(btn => {
+    btn.addEventListener('click', () => window.verifyLandlordAction(btn.dataset.verifyId));
+  });
 }
 
 window.verifyLandlordAction = async function(userId) {
   const { error } = await verifyLandlord(userId);
-  
   if (error) {
-    showToast('Error', 'Failed to verify landlord', 'error');
+    showToast('Error', error.message || 'Failed to verify landlord', 'error');
     return;
   }
-  
   showToast('Success', 'Landlord verified successfully', 'success');
-  loadUnverifiedLandlords();
+  await loadUnverifiedLandlords();
 };
 
 export async function loadReports() {
-  const { data: reports } = await getReports();
-  
+  const { data: overview, error } = await getAdminOverview();
   const container = document.getElementById('reportsList');
   if (!container) return;
 
-  if (!reports || reports.length === 0) {
+  if (error || !overview) {
+    container.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">Unable to load reports</p>';
+    return;
+  }
+
+  const reports = overview.reports || [];
+  if (reports.length === 0) {
     container.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No reports to review</p>';
     return;
   }
@@ -123,14 +140,14 @@ export async function loadReports() {
       <tbody>
         ${reports.map(report => `
           <tr>
-            <td>${report.reason}</td>
-            <td>${report.listings?.title || 'N/A'}</td>
-            <td>${report.users?.name || 'Anonymous'}</td>
-            <td>${new Date(report.created_at).toLocaleDateString()}</td>
-            <td><span class="badge badge-${report.status === 'pending' ? 'warning' : 'success'}">${report.status}</span></td>
+            <td>${escapeHtml(report.reason)}</td>
+            <td>${escapeHtml(report.listings?.title || 'N/A')}</td>
+            <td>${escapeHtml(report.users?.name || 'Anonymous')}</td>
+            <td>${escapeHtml(new Date(report.created_at).toLocaleDateString())}</td>
+            <td><span class="badge badge-${report.status === 'pending' ? 'warning' : 'success'}">${escapeHtml(report.status)}</span></td>
             <td>
               ${report.status === 'pending' ? `
-                <button class="btn btn-sm btn-success" onclick="resolveReport('${report.id}')">
+                <button type="button" class="btn btn-sm btn-success" data-resolve-id="${escapeHtml(report.id)}">
                   <i class="ri-check-line"></i> Resolve
                 </button>
               ` : '-'}
@@ -140,24 +157,18 @@ export async function loadReports() {
       </tbody>
     </table>
   `;
+
+  container.querySelectorAll('[data-resolve-id]').forEach(btn => {
+    btn.addEventListener('click', () => window.resolveReport(btn.dataset.resolveId));
+  });
 }
 
 window.resolveReport = async function(reportId) {
   const { error } = await updateReportStatus(reportId, 'resolved');
-  
   if (error) {
-    showToast('Error', 'Failed to resolve report', 'error');
+    showToast('Error', error.message || 'Failed to resolve report', 'error');
     return;
   }
-  
   showToast('Success', 'Report resolved', 'success');
-  loadReports();
+  await loadReports();
 };
-
-if (window.location.pathname.includes('verify-landlords')) {
-  loadUnverifiedLandlords();
-}
-
-if (window.location.pathname.includes('reports')) {
-  loadReports();
-}

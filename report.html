@@ -17,8 +17,7 @@
   <link rel="icon" type="image/jpeg" href="assets/images/logo/nortava-logo.jpg">
   <link rel="apple-touch-icon" href="assets/images/logo/nortava-logo.jpg">
   <title>Report Issue - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
   <header class="header">
@@ -103,13 +102,36 @@
               </div>
             </div>
 
+            <div class="input-group" id="reportAgeGateGroup" style="margin-bottom: 1.25rem;">
+              <label>Age Confirmation (Birth Month &amp; Year — must be 13+)</label>
+              <div class="age-gate-grid">
+                <select id="reportBirthMonth" class="input" aria-label="Birth Month">
+                  <option value="">Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <input type="number" id="reportBirthYear" class="input" placeholder="Birth Year (e.g. 1995)" min="1900" max="2026" aria-label="Birth Year">
+              </div>
+              <p class="compliance-notice">Required for guests to comply with COPPA (under 13 prohibited). Signed-in accounts are already age-verified.</p>
+            </div>
+
             <button type="submit" class="btn btn-danger btn-lg" style="width: 100%;">
               <i class="ri-flag-line"></i> Submit Report
             </button>
           </form>
 
           <p style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-tertiary);">
-            Reports are reviewed within 24 hours. For urgent matters, please <a href="/contact.html" style="color: var(--primary);">contact us directly</a>.
+            Reporting copyright infringement? Use our <a href="/legal/dmca.html" style="color: var(--primary);">DMCA Copyright Takedown Notice</a>. For urgent matters, <a href="/contact.html" style="color: var(--primary);">contact us directly</a>.
           </p>
         </div>
       </div>
@@ -121,34 +143,59 @@
       <div class="footer-bottom">
         <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
         <div class="footer-legal">
-          <a href="legal/terms.html">Terms</a>
-          <a href="legal/privacy.html">Privacy</a>
-          <a href="legal/cookies.html">Cookies</a>
+          <a href="/legal/terms.html">Terms</a>
+          <a href="/legal/privacy.html">Privacy</a>
+          <a href="/legal/cookies.html">Cookies</a>
+          <a href="/legal/dmca.html">DMCA</a>
         </div>
       </div>
     </div>
   </footer>
 
-  <script type="module" src="core/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { reportListing } from './core/api/api.js';
-    import { showToast } from './core/utils/toast.js';
-    
+    import { reportListing, getCurrentUser } from '/core/api/api.js';
+    import { showToast } from '/core/utils/toast.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const listingParam = params.get('listing');
+    if (listingParam) {
+      const urlInput = document.getElementById('listingUrl');
+      if (urlInput) urlInput.value = `${window.location.origin}/listing.html?id=${encodeURIComponent(listingParam)}`;
+    }
+
+    getCurrentUser().then((user) => {
+      if (user) {
+        const ageGroup = document.getElementById('reportAgeGateGroup');
+        if (ageGroup) ageGroup.style.display = 'none';
+      }
+    });
+
     document.getElementById('reportForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const params = new URLSearchParams(window.location.search);
-      const listingId = params.get('listing') || null;
+
       const reason = document.getElementById('reportType').value;
-      const details = document.getElementById('details').value;
-      
-      const { error } = await reportListing(listingId, reason, details);
-      
+      const listingUrl = document.getElementById('listingUrl').value.trim();
+      const details = document.getElementById('details').value.trim();
+      const contactEmail = document.getElementById('contactEmail').value.trim();
+      const birthMonth = Number(document.getElementById('reportBirthMonth')?.value || 0) || undefined;
+      const birthYear = Number(document.getElementById('reportBirthYear')?.value || 0) || undefined;
+
+      const { error } = await reportListing({
+        listingId: listingParam || null,
+        listingUrl,
+        reason,
+        details,
+        contactEmail,
+        birthYear,
+        birthMonth
+      });
+
       if (error) {
-        showToast('Error', 'Failed to submit report', 'error');
+        showToast('Report Blocked', error.message || 'Failed to submit report', 'error');
         return;
       }
-      
+
       showToast('Report Submitted', 'Thank you for helping keep Nortava safe', 'success');
       e.target.reset();
     });

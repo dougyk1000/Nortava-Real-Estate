@@ -29,9 +29,9 @@ ALTER TABLE listings ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
 
 ## Application Configuration
 
-- [ ] **Admin email** - Update `core/api/api.js` line 110 and 160:
-  - Change `douglasnkowo3036@gmail.com` to your admin email
-  - This is used for notifications and admin functions
+- [ ] **Admin email allowlist** - Configure `ADMIN_EMAILS` in server environment secrets:
+  - Set `ADMIN_EMAILS=admin@yourdomain.com` (never commit admin emails or passwords to source files)
+  - Also assign `role = 'admin'` in the `users` table for designated admin accounts
 
 - [ ] **Contact info in HTML files** - Update with your contact details:
   - Email: nortava@gmail.com (change to your email)

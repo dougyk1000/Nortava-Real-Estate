@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
   <style>
     :root {
@@ -166,22 +165,22 @@
   <div class="admin-layout" style="margin-top: 2rem;">
     <aside class="admin-sidebar">
       <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; color: var(--text-secondary);">Menu</h3>
-      <div class="admin-menu-item active" onclick="switchTab('overview')">
+      <div class="admin-menu-item active" data-tab="overview">
         <i class="ri-dashboard-line"></i> Overview
       </div>
-      <div class="admin-menu-item" onclick="switchTab('users')">
+      <div class="admin-menu-item" data-tab="users">
         <i class="ri-team-line"></i> Users
       </div>
-      <div class="admin-menu-item" onclick="switchTab('listings')">
+      <div class="admin-menu-item" data-tab="listings">
         <i class="ri-home-line"></i> Listings
       </div>
-      <div class="admin-menu-item" onclick="switchTab('reports')">
+      <div class="admin-menu-item" data-tab="reports">
         <i class="ri-alert-line"></i> Reports
       </div>
-      <div class="admin-menu-item" onclick="switchTab('payments')">
+      <div class="admin-menu-item" data-tab="payments">
         <i class="ri-money-dollar-circle-line"></i> Payments
       </div>
-      <div class="admin-menu-item" onclick="switchTab('settings')">
+      <div class="admin-menu-item" data-tab="settings">
         <i class="ri-settings-line"></i> Settings
       </div>
     </aside>
@@ -361,12 +360,12 @@
           </div>
 
           <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius);">
-            <h4 style="margin-bottom: 1rem;">Admin Actions</h4>
-            <button class="btn btn-secondary" style="margin-right: 0.5rem;">
-              <i class="ri-refresh-line"></i> Clear Cache
-            </button>
-            <button class="btn btn-danger" onclick="confirmReset()">
-              <i class="ri-delete-bin-line"></i> Reset Database
+            <h4 style="margin-bottom: 0.75rem;">Security Notice</h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+              Destructive database resets are disabled in the browser UI for data integrity and auditability. Manage schema or backups directly in Supabase.
+            </p>
+            <button type="button" class="btn btn-secondary" id="clearLocalCacheBtn">
+              <i class="ri-refresh-line"></i> Clear Browser Session Cache
             </button>
           </div>
         </div>
@@ -374,92 +373,185 @@
     </main>
   </div>
 
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getCurrentUser, logoutUser, getAllUsers, getAllListings, getReports, getPaymentHistory, getAdminStats, resetDatabase, approveListing } from '../core/api/api.js';
-    import { showToast } from '../core/utils/toast.js';
-    import { updateNavForAuth } from '../core/utils/navigation.js';
+    import {
+      verifyAdminSession,
+      logoutUser,
+      getAdminOverview,
+      verifyLandlord,
+      approveListing,
+      updateReportStatus
+    } from '/core/api/api.js';
+    import { showToast } from '/core/utils/toast.js';
+    import { escapeHtml } from '/core/utils/sanitize.js';
 
-    // Check admin access
-    async function checkAdminAccess() {
-      const user = await getCurrentUser();
-      const adminEmail = 'douglasnkowo3036@gmail.com';
-      
-      if (!user || user.email !== adminEmail) {
+    async function initAdminDashboard() {
+      const session = await verifyAdminSession();
+      if (!session?.isAdmin) {
         window.location.href = '/auth/login.html';
         return;
       }
-      document.getElementById('adminEmail').textContent = user.email;
-      updateNavForAuth();
+
+      const emailEl = document.getElementById('adminEmail');
+      if (emailEl && session.user?.email) {
+        emailEl.textContent = session.user.email;
+      }
+
+      setupMenuTabs();
+      setupCacheButton();
+      await loadDashboard();
+    }
+
+    function setupMenuTabs() {
+      document.querySelectorAll('.admin-menu-item[data-tab]').forEach(item => {
+        item.addEventListener('click', () => {
+          const tabName = item.dataset.tab;
+          document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('active'));
+          document.querySelectorAll('.admin-menu-item').forEach(el => el.classList.remove('active'));
+          document.getElementById(tabName)?.classList.add('active');
+          item.classList.add('active');
+        });
+      });
+    }
+
+    function setupCacheButton() {
+      document.getElementById('clearLocalCacheBtn')?.addEventListener('click', () => {
+        try {
+          localStorage.removeItem('nortava-notifications');
+          sessionStorage.removeItem('nortava-chat-history');
+        } catch {
+          // Ignore
+        }
+        showToast('Cleared', 'Browser session cache cleared.', 'success');
+      });
     }
 
     async function loadDashboard() {
-      const stats = await getAdminStats();
-      
-      if (stats.data) {
-        document.getElementById('totalUsers').textContent = stats.data.totalUsers || 0;
-        document.getElementById('totalListings').textContent = stats.data.totalListings || 0;
-        document.getElementById('totalUnlocks').textContent = stats.data.totalUnlocks || 0;
-        document.getElementById('verifiedLandlords').textContent = stats.data.verifiedLandlords || 0;
+      const { data, error } = await getAdminOverview();
+      if (error || !data) {
+        showToast('Access Error', error?.message || 'Unable to load admin overview.', 'error');
+        return;
       }
 
-      loadUsers();
-      loadListings();
-      loadReports();
-      loadPayments();
+      const stats = data.stats || {};
+      document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+      document.getElementById('totalListings').textContent = stats.totalListings || 0;
+      document.getElementById('totalUnlocks').textContent = stats.totalUnlocks || 0;
+      document.getElementById('verifiedLandlords').textContent = stats.verifiedLandlords || 0;
+
+      renderUsers(data.users || []);
+      renderListings(data.listings || []);
+      renderReports(data.reports || []);
+      renderPayments(data.unlocks || []);
+
+      const recentEl = document.getElementById('recentActivity');
+      if (recentEl) {
+        const recentCount = (data.listings?.length || 0) + (data.reports?.length || 0);
+        recentEl.textContent = recentCount
+          ? `Loaded ${data.users?.length || 0} users, ${data.listings?.length || 0} listings, ${data.reports?.length || 0} reports, and ${data.unlocks?.length || 0} unlocks.`
+          : 'No activity recorded yet.';
+      }
     }
 
-    async function loadUsers() {
-      const { data: users } = await getAllUsers();
+    function renderUsers(users) {
       const tbody = document.getElementById('usersTable');
-      
-      if (!users || users.length === 0) {
+      if (!users.length) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No users found</td></tr>';
         return;
       }
 
       tbody.innerHTML = users.map(user => `
         <tr>
-          <td>${user.name || 'N/A'}</td>
-          <td>${user.email}</td>
-          <td><span style="background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem;">${user.role}</span></td>
-          <td>${user.verified ? '<span style="color: var(--success);">✓ Verified</span>' : '<span style="color: var(--text-secondary);">Pending</span>'}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>${escapeHtml(user.name || 'N/A')}</td>
+          <td>${escapeHtml(user.email || 'N/A')}</td>
+          <td><span style="background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem;">${escapeHtml(user.role || 'tenant')}</span></td>
+          <td>${user.verified ? '<span style="color: var(--success);">Verified</span>' : '<span style="color: var(--text-secondary);">Pending</span>'}</td>
+          <td>${escapeHtml(user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A')}</td>
           <td>
-            <button class="btn btn-sm btn-outline" onclick="verifyUser('${user.id}')">
-              <i class="ri-verified-badge-fill"></i> Verify
-            </button>
+            ${!user.verified ? `<button class="btn btn-sm btn-outline" data-verify-user="${escapeHtml(user.id)}"><i class="ri-verified-badge-fill"></i> Verify</button>` : '<span class="badge badge-success">Verified</span>'}
           </td>
         </tr>
       `).join('');
+
+      tbody.querySelectorAll('[data-verify-user]').forEach(btn => {
+        btn.addEventListener('click', () => window.verifyUser(btn.dataset.verifyUser));
+      });
     }
 
-    async function loadListings() {
-      const { data: listings } = await getAllListings();
+    function renderListings(listings) {
       const tbody = document.getElementById('listingsTable');
-      
-      if (!listings || listings.length === 0) {
+      if (!listings.length) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No listings found</td></tr>';
         return;
       }
 
       tbody.innerHTML = listings.map(listing => `
         <tr>
-          <td>${listing.title}</td>
-          <td>${listing.users?.name || 'Unknown'}</td>
-          <td>${listing.type}</td>
-          <td>$${listing.price}</td>
-          <td>${listing.location}</td>
+          <td>${escapeHtml(listing.title)}</td>
+          <td>${escapeHtml(listing.users?.name || 'Unknown')}</td>
+          <td>${escapeHtml(listing.type)}</td>
+          <td>$${escapeHtml(listing.price)}</td>
+          <td>${escapeHtml(listing.location)}</td>
           <td>
             <span class="badge ${listing.status === 'published' ? 'badge-success' : 'badge-warning'}">
-              ${listing.status || 'pending'}
+              ${escapeHtml(listing.status || 'pending')}
             </span>
           </td>
           <td>
             <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-sm btn-outline" onclick="viewListing('${listing.id}')">View</button>
-              ${listing.status !== 'published' ? `<button class="btn btn-sm btn-success" onclick="verifyListing('${listing.id}')">Approve</button>` : ''}
+              <a class="btn btn-sm btn-outline" href="/listing.html?id=${encodeURIComponent(listing.id)}">View</a>
+              ${listing.status !== 'published' ? `<button class="btn btn-sm btn-success" data-approve-listing="${escapeHtml(listing.id)}">Approve</button>` : ''}
             </div>
           </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-approve-listing]').forEach(btn => {
+        btn.addEventListener('click', () => window.verifyListing(btn.dataset.approveListing));
+      });
+    }
+
+    function renderReports(reports) {
+      const tbody = document.getElementById('reportsTable');
+      if (!reports.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No reports found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = reports.map(report => `
+        <tr>
+          <td>${escapeHtml(String(report.id).substring(0, 8))}</td>
+          <td>${escapeHtml(report.users?.name || report.contact_email || 'Guest')}</td>
+          <td>${escapeHtml(report.reason)}</td>
+          <td><span style="color: ${report.status === 'pending' ? 'var(--warning)' : 'var(--success)'};">${escapeHtml(report.status)}</span></td>
+          <td>${escapeHtml(report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A')}</td>
+          <td>
+            ${report.status !== 'resolved' ? `<button class="btn btn-sm btn-primary" data-resolve-report="${escapeHtml(report.id)}">Resolve</button>` : '<span class="badge badge-success">Resolved</span>'}
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-resolve-report]').forEach(btn => {
+        btn.addEventListener('click', () => window.resolveReport(btn.dataset.resolveReport));
+      });
+    }
+
+    function renderPayments(payments) {
+      const tbody = document.getElementById('paymentsTable');
+      if (!payments.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No payments found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = payments.map(payment => `
+        <tr>
+          <td>${escapeHtml(payment.users?.name || 'Unknown')}</td>
+          <td>${escapeHtml(payment.listings?.title || 'N/A')}</td>
+          <td>$${escapeHtml(payment.amount || '2.50')}</td>
+          <td>${escapeHtml(payment.payment_method || 'N/A')}</td>
+          <td><span style="color: var(--success);">${escapeHtml(payment.status || 'completed')}</span></td>
+          <td>${escapeHtml(payment.unlocked_at ? new Date(payment.unlocked_at).toLocaleDateString() : 'N/A')}</td>
         </tr>
       `).join('');
     }
@@ -467,75 +559,31 @@
     window.verifyListing = async function(listingId) {
       const { error } = await approveListing(listingId);
       if (error) {
-        showToast('Error', 'Failed to approve listing', 'error');
+        showToast('Error', error.message || 'Failed to approve listing', 'error');
       } else {
         showToast('Success', 'Listing approved and published', 'success');
-        loadListings();
+        loadDashboard();
       }
-    }
+    };
 
-    window.confirmReset = async function() {
-      if (confirm('Are you absolutely sure you want to reset the database? ALL data will be lost.')) {
-        const { success, error } = await resetDatabase();
-        if (success) {
-          showToast('Success', 'Database reset successfully', 'success');
-          loadDashboard();
-        } else {
-          showToast('Error', 'Failed to reset database', 'error');
-        }
+    window.verifyUser = async function(userId) {
+      const { error } = await verifyLandlord(userId);
+      if (error) {
+        showToast('Error', error.message || 'Failed to verify user', 'error');
+      } else {
+        showToast('Success', 'User verified', 'success');
+        loadDashboard();
       }
-    }
+    };
 
-    async function loadReports() {
-      const { data: reports } = await getReports();
-      const tbody = document.getElementById('reportsTable');
-      
-      if (!reports || reports.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No reports found</td></tr>';
-        return;
+    window.resolveReport = async function(reportId) {
+      const { error } = await updateReportStatus(reportId, 'resolved');
+      if (error) {
+        showToast('Error', error.message || 'Failed to resolve report', 'error');
+      } else {
+        showToast('Success', 'Report resolved', 'success');
+        loadDashboard();
       }
-
-      tbody.innerHTML = reports.map(report => `
-        <tr>
-          <td>${report.id.substring(0, 8)}</td>
-          <td>${report.users?.name || 'Unknown'}</td>
-          <td>${report.reason}</td>
-          <td><span style="color: ${report.status === 'pending' ? 'var(--warning)' : 'var(--success)'};">${report.status}</span></td>
-          <td>${new Date(report.created_at).toLocaleDateString()}</td>
-          <td>
-            <button class="action-btn" onclick="resolveReport('${report.id}')">Resolve</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function loadPayments() {
-      const { data: payments } = await getPaymentHistory();
-      const tbody = document.getElementById('paymentsTable');
-      
-      if (!payments || payments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No payments found</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = payments.map(payment => `
-        <tr>
-          <td>${payment.users?.name || 'Unknown'}</td>
-          <td>${payment.listings?.title || 'N/A'}</td>
-          <td>$${payment.amount}</td>
-          <td>${payment.payment_method || 'N/A'}</td>
-          <td><span style="color: var(--success);">✓ Completed</span></td>
-          <td>${new Date(payment.unlocked_at).toLocaleDateString()}</td>
-        </tr>
-      `).join('');
-    }
-
-    window.switchTab = function(tabName) {
-      document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.admin-menu-item').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById(tabName).classList.add('active');
-      event.target.closest('.admin-menu-item').classList.add('active');
     };
 
     window.logoutAdmin = async function() {
@@ -546,24 +594,7 @@
       }, 1000);
     };
 
-    window.verifyUser = async function(userId) {
-      // Placeholder for verification logic
-      showToast('Success', 'User verified', 'success');
-      loadUsers();
-    };
-
-    window.viewListing = function(listingId) {
-      window.location.href = `/listing.html?id=${listingId}`;
-    };
-
-    window.resolveReport = async function(reportId) {
-      showToast('Success', 'Report resolved', 'success');
-      loadReports();
-    };
-
-    // Initialize
-    checkAdminAccess();
-    loadDashboard();
+    initAdminDashboard();
   </script>
 </body>
 </html>

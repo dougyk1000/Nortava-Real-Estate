@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unlock History - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -79,6 +78,7 @@
     import { getLandlordUnlocks, getCurrentUser, subscribeToUnlocks, unsubscribe } from '/core/api/api.js';
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
+    import { escapeHtml } from '/core/utils/sanitize.js';
     window.logout = logout;
 
     let subscription = null;
@@ -96,7 +96,7 @@
     async function loadUnlockHistory(userId) {
       const { data: unlocks } = await getLandlordUnlocks(userId);
       const container = document.getElementById('unlockHistory');
-      
+
       if (!unlocks || unlocks.length === 0) return;
 
       container.innerHTML = `
@@ -113,9 +113,9 @@
           <tbody>
             ${unlocks.map(unlock => `
               <tr>
-                <td>${unlock.listings?.title || 'N/A'}</td>
-                <td>${unlock.users?.name || 'Anonymous'}</td>
-                <td>${new Date(unlock.unlocked_at).toLocaleDateString()} ${new Date(unlock.unlocked_at).toLocaleTimeString()}</td>
+                <td>${escapeHtml(unlock.listings?.title || 'N/A')}</td>
+                <td>${escapeHtml(unlock.users?.name || 'Anonymous')}</td>
+                <td>${escapeHtml(new Date(unlock.unlocked_at).toLocaleDateString())} ${escapeHtml(new Date(unlock.unlocked_at).toLocaleTimeString())}</td>
                 <td>$2.50</td>
                 <td><span class="badge badge-success">Paid</span></td>
               </tr>

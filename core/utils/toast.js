@@ -1,3 +1,5 @@
+import { escapeHtml } from './sanitize.js';
+
 let toastContainer = null;
 
 function getToastContainer() {
@@ -11,34 +13,34 @@ function getToastContainer() {
 
 export function showToast(title, message, type = 'success', duration = 4000) {
   const container = getToastContainer();
-  
+
   const icons = {
     success: 'ri-checkbox-circle-fill',
     error: 'ri-error-warning-fill',
     warning: 'ri-alert-fill',
     info: 'ri-information-fill'
   };
-  
+
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+  toast.className = `toast ${escapeHtml(type)}`;
   toast.innerHTML = `
     <i class="${icons[type] || icons.info}"></i>
     <div class="toast-content">
-      <div class="toast-title">${title}</div>
-      ${message ? `<div class="toast-message">${message}</div>` : ''}
+      <div class="toast-title">${escapeHtml(title)}</div>
+      ${message ? `<div class="toast-message">${escapeHtml(message)}</div>` : ''}
     </div>
-    <button class="toast-close"><i class="ri-close-line"></i></button>
+    <button class="toast-close" aria-label="Close notification"><i class="ri-close-line"></i></button>
   `;
-  
+
   container.appendChild(toast);
-  
+
   const closeBtn = toast.querySelector('.toast-close');
   closeBtn.addEventListener('click', () => removeToast(toast));
-  
+
   if (duration > 0) {
     setTimeout(() => removeToast(toast), duration);
   }
-  
+
   return toast;
 }
 

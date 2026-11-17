@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add Listing - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -181,10 +180,18 @@
 
   <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { createListing, uploadListingImage, getCurrentUser } from '/core/api/api.js';
+    import { createListing, uploadListingImage, deleteListing, getCurrentUser } from '/core/api/api.js';
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
+    import { safeImageUrl, escapeHtml } from '/core/utils/sanitize.js';
     window.logout = logout;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser();
+      if (!user) {
+        window.location.href = '/auth/login.html';
+      }
+    });
 
     const uploadZone = document.getElementById('uploadZone');
     const imageInput = document.getElementById('imageInput');
@@ -206,81 +213,78 @@
     });
     imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
+    const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+    function renderPreviews() {
+      imagePreviews.innerHTML = '';
+      uploadedFiles.forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const safeSrc = safeImageUrl(e.target?.result);
+          if (!safeSrc) return;
+          const preview = document.createElement('div');
+          preview.className = 'image-preview';
+          preview.innerHTML = `
+            <img src="${escapeHtml(safeSrc)}" alt="Preview">
+            <button type="button" data-remove-idx="${i}">
+              <i class="ri-close-line"></i>
+            </button>
+          `;
+          preview.querySelector('button')?.addEventListener('click', () => {
+            window.removeImage(i);
+          });
+          imagePreviews.appendChild(preview);
+        };
+        reader.readAsDataURL(file);
+      });
+      uploadZone.style.display = uploadedFiles.length >= 3 ? 'none' : 'block';
+    }
+
     function handleFiles(files) {
       const remaining = 3 - uploadedFiles.length;
       const newFiles = Array.from(files).slice(0, remaining);
-      
+
       if (newFiles.length === 0 && files.length > 0) {
         showToast('Limit Reached', 'Maximum 3 images allowed', 'warning');
         return;
       }
 
       newFiles.forEach(file => {
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+          showToast('Invalid File', 'Only JPG, PNG, or WebP images are allowed', 'error');
+          return;
+        }
         if (file.size > 5 * 1024 * 1024) {
           showToast('File Too Large', 'Images must be under 5MB', 'error');
           return;
         }
-
         uploadedFiles.push(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const preview = document.createElement('div');
-          preview.className = 'image-preview';
-          preview.innerHTML = `
-            <img src="${e.target.result}" alt="Preview">
-            <button type="button" onclick="removeImage(${uploadedFiles.length - 1})">
-              <i class="ri-close-line"></i>
-            </button>
-          `;
-          imagePreviews.appendChild(preview);
-        };
-        reader.readAsDataURL(file);
       });
 
-      if (uploadedFiles.length >= 3) {
-        uploadZone.style.display = 'none';
-      }
+      renderPreviews();
     }
 
     window.removeImage = function(index) {
       uploadedFiles.splice(index, 1);
-      imagePreviews.innerHTML = '';
-      uploadedFiles.forEach((file, i) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const preview = document.createElement('div');
-          preview.className = 'image-preview';
-          preview.innerHTML = `
-            <img src="${e.target.result}" alt="Preview">
-            <button type="button" onclick="removeImage(${i})">
-              <i class="ri-close-line"></i>
-            </button>
-          `;
-          imagePreviews.appendChild(preview);
-        };
-        reader.readAsDataURL(file);
-      });
-      if (uploadedFiles.length < 3) {
-        uploadZone.style.display = 'block';
-      }
+      renderPreviews();
     };
 
     document.getElementById('addListingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading-spinner"></span> Publishing...';
+      submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
 
       const listingData = {
-        title: document.getElementById('title').value,
+        title: document.getElementById('title').value.trim(),
         type: document.getElementById('type').value,
         price: parseFloat(document.getElementById('price').value),
-        rooms: parseInt(document.getElementById('rooms').value),
-        bathrooms: parseInt(document.getElementById('bathrooms').value),
+        rooms: parseInt(document.getElementById('rooms').value, 10),
+        bathrooms: parseInt(document.getElementById('bathrooms').value, 10),
         size: document.getElementById('size').value || null,
-        location: document.getElementById('location').value,
-        description: document.getElementById('description').value,
+        location: document.getElementById('location').value.trim(),
+        description: document.getElementById('description').value.trim(),
         furnished: document.getElementById('furnished').checked,
         water: document.getElementById('water').checked,
         electricity: document.getElementById('electricity').checked,
@@ -289,34 +293,31 @@
 
       const { data: listing, error } = await createListing(listingData);
 
-      if (error) {
-        showToast('Error', error.message, 'error');
+      if (error || !listing) {
+        showToast('Error', error?.message || 'Failed to create listing', 'error');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="ri-check-line"></i> Publish Listing';
         return;
       }
 
-      // Upload images (required)
       let hasImageError = false;
       for (const file of uploadedFiles) {
         const { error: imgError } = await uploadListingImage(listing.id, file);
         if (imgError) {
-          console.error('Image upload failed:', imgError);
           hasImageError = true;
-          showToast('Error', `Failed to upload image: ${file.name}`, 'error');
+          showToast('Error', `Failed to upload image: ${imgError.message || file.name}`, 'error');
           break;
         }
       }
-      
+
       if (hasImageError) {
-        // Delete the listing if images failed
-        await fetch(`/api/listings/${listing.id}`, { method: 'DELETE' }).catch(() => {});
+        await deleteListing(listing.id).catch(() => {});
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="ri-check-line"></i> Publish Listing';
         return;
       }
 
-      showToast('Success', 'Your listing has been published!', 'success');
+      showToast('Submitted for Review', 'Your listing has been submitted and will be published once approved.', 'success');
       setTimeout(() => {
         window.location.href = '/dashboard/landlord.html';
       }, 1500);

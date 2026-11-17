@@ -1,8 +1,9 @@
-import { loginUser, registerUser, logoutUser, getCurrentUser } from '../api/api.js';
+import { loginUser, registerUser, logoutUser, getCurrentUser, requestPasswordReset, verifyAdminSession } from '../api/api.js';
 import { showToast } from '../utils/toast.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   setupLoginForm();
+  setupForgotPassword();
   setupRegisterForm();
   setupRoleSelection();
   checkAuthRedirect();
@@ -12,28 +13,34 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupLoginForm() {
   const form = document.getElementById('loginForm');
   if (!form) return;
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
-    
+
     try {
-      const { data, error } = await loginUser(email, password);
-      if (error) return showToast('Login Failed', error.message, 'error');
-      
+      const { error } = await loginUser(email, password);
+      if (error) {
+        showToast('Login Failed', error.message, 'error');
+        return;
+      }
+
       showToast('Welcome Back', 'Login successful!', 'success');
-      
+
+      const adminCheck = await verifyAdminSession();
+      if (adminCheck?.isAdmin) {
+        redirectByRole('admin');
+        return;
+      }
+
       const user = await getCurrentUser();
-      // Check if user is admin
-      const adminEmail = 'douglasnkowo3036@gmail.com';
-      const role = email === adminEmail ? 'admin' : user?.role;
-      redirectByRole(role);
+      redirectByRole(user?.role || 'tenant');
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="ri-login-box-line"></i> Sign In';
@@ -41,37 +48,114 @@ function setupLoginForm() {
   });
 }
 
-// ---------------- REGISTER ----------------
+// ---------------- FORGOT PASSWORD ----------------
+function setupForgotPassword() {
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  const modal = document.getElementById('forgotPasswordModal');
+  const closeBtn = document.getElementById('closeForgotModal');
+  const forgotForm = document.getElementById('forgotPasswordForm');
+
+  if (!forgotLink || !modal) return;
+
+  forgotLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    modal.style.display = 'flex';
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  forgotForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('resetEmail')?.value.trim();
+    if (!email) {
+      showToast('Error', 'Please enter your email address', 'error');
+      return;
+    }
+
+    const { error } = await requestPasswordReset(email);
+    if (error) {
+      showToast('Reset Unavailable', error.message, 'error');
+      return;
+    }
+
+    showToast('Reset Sent', 'If an account exists for that email, a password reset link has been sent.', 'success');
+    modal.style.display = 'none';
+    forgotForm.reset();
+  });
+}
+
+// ---------------- REGISTER (WITH SERVER-SIDE COPPA & 18+ CHECK) ----------------
 function setupRegisterForm() {
   const form = document.getElementById('registerForm');
   if (!form) return;
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
+    const birthMonth = Number(document.getElementById('birthMonth')?.value);
+    const birthYear = Number(document.getElementById('birthYear')?.value);
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const roleInput = document.querySelector('input[name="role"]:checked');
-    const role = roleInput ? roleInput.value : null;
+    const role = roleInput ? roleInput.value : 'tenant';
+    const termsAccepted = Boolean(document.getElementById('terms')?.checked);
     const submitBtn = form.querySelector('button[type="submit"]');
-    
-    if (!role) return showToast('Error', 'Please select a role', 'error');
-    if (!document.getElementById('terms').checked) return showToast('Error', 'You must agree to the Terms and Privacy Policy', 'error');
-    if (password !== confirmPassword) return showToast('Error', 'Passwords do not match', 'error');
-    if (password.length < 8) return showToast('Error', 'Password must be at least 8 characters', 'error');
-    
+
+    if (!birthMonth || !birthYear) {
+      showToast('Age Verification Required', 'Please select your birth month and year.', 'error');
+      return;
+    }
+    if (!termsAccepted) {
+      showToast('Error', 'You must agree to the Terms of Service and Privacy Policy', 'error');
+      return;
+    }
+    if (password !== confirmPassword) {
+      showToast('Error', 'Passwords do not match', 'error');
+      return;
+    }
+    if (password.length < 8) {
+      showToast('Error', 'Password must be at least 8 characters', 'error');
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
-    
+
     try {
-      const { data, error } = await registerUser(email, password, name, role, phone);
-      if (error) return showToast('Registration Failed', error.message, 'error');
-      
+      const { data, error } = await registerUser({
+        email,
+        password,
+        name,
+        role,
+        phone,
+        birthYear,
+        birthMonth,
+        termsAccepted
+      });
+
+      if (error) {
+        showToast('Registration Blocked', error.message, 'error');
+        return;
+      }
+
+      if (data?.requiresEmailConfirmation) {
+        showToast('Verify Email', 'Account created! Please check your email to confirm before signing in.', 'success');
+        setTimeout(() => {
+          window.location.href = '/auth/login.html';
+        }, 1500);
+        return;
+      }
+
       showToast('Success', 'Account created successfully!', 'success');
-      
       redirectByRole(role);
     } finally {
       submitBtn.disabled = false;
@@ -96,36 +180,34 @@ function setupRoleSelection() {
 // ---------------- REDIRECT BY ROLE ----------------
 function redirectByRole(role) {
   if (!role) return;
-  
+
   const roleMap = {
     landlord: '/dashboard/landlord.html',
     tenant: '/dashboard/tenant.html',
-    admin: '/admin/dashboard.html'
+    admin: '/admin/index.html'
   };
-  
+
   const target = roleMap[role] || '/';
-  setTimeout(() => window.location.href = target, 800);
+  setTimeout(() => {
+    window.location.href = target;
+  }, 800);
 }
 
 // ---------------- CHECK IF LOGGED IN ----------------
 async function checkAuthRedirect() {
+  const isAuthPage =
+    window.location.pathname.includes('/auth/') ||
+    window.location.pathname.endsWith('/login.html') ||
+    window.location.pathname.endsWith('/register.html');
+
+  if (!isAuthPage) return;
+
   const user = await getCurrentUser();
-  const isAuthPage = window.location.pathname.includes('/auth/') || 
-                     window.location.pathname.endsWith('/login.html') || 
-                     window.location.pathname.endsWith('/register.html') ||
-                     window.location.pathname === '/' ||
-                     window.location.pathname === '/index.html';
-  
-  if (user) {
-    // Check if user is admin
-    const adminEmail = 'douglasnkowo3036@gmail.com';
-    const role = user.email === adminEmail ? 'admin' : user.role;
-    
-    // If on auth page or homepage and logged in, redirect to dashboard
-    if (isAuthPage) {
-      redirectByRole(role);
-    }
-  }
+  if (!user) return;
+
+  const adminCheck = await verifyAdminSession();
+  const role = adminCheck?.isAdmin ? 'admin' : user.role;
+  redirectByRole(role);
 }
 
 // ---------------- LOGOUT ----------------

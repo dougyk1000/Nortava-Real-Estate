@@ -37,8 +37,7 @@
   <link rel="apple-touch-icon" href="assets/images/logo/nortava-logo.jpg">
   
   <title>Nortava - Real Estate in Norton, Zimbabwe</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
   <header class="header">
@@ -301,9 +300,8 @@
           </a>
           <p class="footer-text">The local-first real estate platform for Norton, Zimbabwe. Connecting tenants with landlords since 2024.</p>
           <div class="footer-social">
-            <a href="#" aria-label="Facebook"><i class="ri-facebook-fill"></i></a>
-            <a href="#" aria-label="Twitter"><i class="ri-twitter-x-fill"></i></a>
-            <a href="#" aria-label="WhatsApp"><i class="ri-whatsapp-fill"></i></a>
+            <a href="contact.html" aria-label="Email Support"><i class="ri-mail-fill"></i></a>
+            <a href="https://wa.me/263789707745" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="ri-whatsapp-fill"></i></a>
           </div>
         </div>
         <div class="footer-column">
@@ -337,14 +335,69 @@
       <div class="footer-bottom">
         <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
         <div class="footer-legal">
-          <a href="legal/terms.html">Terms</a>
-          <a href="legal/privacy.html">Privacy</a>
-          <a href="legal/cookies.html">Cookies</a>
+          <a href="/legal/terms.html">Terms</a>
+          <a href="/legal/privacy.html">Privacy</a>
+          <a href="/legal/cookies.html">Cookies</a>
+          <a href="/legal/dmca.html">DMCA</a>
         </div>
       </div>
     </div>
   </footer>
 
-  <script type="module" src="core/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
+  <script type="module">
+    import { getAllListings } from '/core/api/api.js';
+    import { escapeHtml, safeImageUrl } from '/core/utils/sanitize.js';
+
+    async function loadHomeSummary() {
+      const { data: listings } = await getAllListings();
+      if (!listings || !listings.length) return;
+
+      const listingCountEl = document.getElementById('listingCount');
+      const landlordCountEl = document.getElementById('landlordCount');
+      if (listingCountEl) listingCountEl.textContent = String(listings.length);
+
+      const uniqueVerifiedLandlords = new Set(
+        listings.filter(l => l.users?.verified).map(l => l.user_id)
+      );
+      if (landlordCountEl) {
+        landlordCountEl.textContent = String(uniqueVerifiedLandlords.size || new Set(listings.map(l => l.user_id)).size);
+      }
+
+      const grid = document.getElementById('featuredListings');
+      if (!grid) return;
+      grid.innerHTML = listings.slice(0, 3).map(listing => {
+        const safeImg = safeImageUrl(listing.listing_images?.[0]?.image_url);
+        const typeLabel = listing.type === 'rent' ? 'For Rent' : 'For Sale';
+        const priceSuffix = listing.type === 'rent' ? ' <span>/month</span>' : '';
+        return `
+          <div class="card property-card">
+            <div class="property-image">
+              ${safeImg
+                ? `<img src="${escapeHtml(safeImg)}" alt="${escapeHtml(listing.title)}" style="width: 100%; height: 200px; object-fit: cover;">`
+                : `<img src="/assets/images/family_home_exterior.png" alt="${escapeHtml(listing.title)}" style="width: 100%; height: 200px; object-fit: cover;">`}
+              <span class="property-badge">${typeLabel}</span>
+            </div>
+            <div class="property-content">
+              <div class="property-price">$${escapeHtml(listing.price)}${priceSuffix}</div>
+              <h3 class="property-title">${escapeHtml(listing.title)}</h3>
+              <div class="property-location">
+                <i class="ri-map-pin-line"></i>
+                <span>${escapeHtml(listing.location)}</span>
+              </div>
+              <div class="property-features">
+                <div class="property-feature"><i class="ri-hotel-bed-line"></i><span>${escapeHtml(listing.rooms)} Beds</span></div>
+                <div class="property-feature"><i class="ri-drop-line"></i><span>${escapeHtml(listing.bathrooms || 1)} Bath</span></div>
+                <div class="property-feature"><i class="ri-ruler-line"></i><span>${escapeHtml(listing.size || 'N/A')}</span></div>
+              </div>
+              <a href="listing.html?id=${encodeURIComponent(listing.id)}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    loadHomeSummary();
+  </script>
 </body>
 </html>

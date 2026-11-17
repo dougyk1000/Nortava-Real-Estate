@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -54,9 +53,13 @@
     <div class="container" style="max-width: 800px;">
       <div class="payment-layout" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; align-items: start;">
         <div class="card" style="padding: 2.5rem; border-radius: var(--radius-2xl);">
-          <div style="margin-bottom: 2.5rem;">
-            <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem; font-weight: 800;">Secure Checkout</h1>
-            <p style="color: var(--text-secondary);">Select your preferred local payment method</p>
+          <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem; font-weight: 800;">Secure One-Time Checkout</h1>
+            <p style="color: var(--text-secondary);">Pay a one-time $2.50 fee to permanently unlock this landlord's contact details. No subscription or automatic renewal applies.</p>
+          </div>
+
+          <div id="gatewayStatusNotice" class="owner-action-note" style="display: none; margin-bottom: 1.5rem;">
+            <strong>Payment Gateway Awaiting Configuration:</strong> Live EcoCash/OneMoney/Mukuru/InnBucks merchant credentials have not been configured on this server. Checkout submission will be blocked until live payment credentials are set.
           </div>
 
           <form id="paymentForm">
@@ -106,7 +109,12 @@
               </div>
             </div>
 
-            <div style="margin-top: 2.5rem;">
+            <label class="checkbox-group" style="margin-top: 1.5rem;">
+              <input type="checkbox" id="oneTimeConsent" required>
+              <span>I authorize a <strong>single, one-time $2.50 charge</strong> to unlock this landlord's contact details. I understand there is <strong>no recurring subscription or automatic renewal</strong>, and I agree to the <a href="/legal/terms.html" style="color: var(--primary);">Terms of Service</a>.</span>
+            </label>
+
+            <div style="margin-top: 2rem;">
               <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 1.25rem; font-size: 1.1rem; border-radius: var(--radius-xl); box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);">
                 <i class="ri-secure-payment-line"></i> Complete Payment $2.50
               </button>
@@ -124,6 +132,10 @@
                 <span style="font-weight: 600; text-align: right;">Landlord Contact Unlock</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Billing Type</span>
+                <span style="font-weight: 600;">One-Time Only</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: var(--text-secondary);">Service Fee</span>
                 <span style="font-weight: 600;">$2.50</span>
               </div>
@@ -132,10 +144,10 @@
               <span style="font-size: 1.1rem; font-weight: 700;">Total Amount</span>
               <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary);">$2.50</span>
             </div>
-            
+
             <div style="margin-top: 2rem; background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: var(--radius); display: flex; gap: 0.75rem; align-items: flex-start;">
               <i class="ri-shield-flash-line" style="font-size: 1.5rem; color: var(--success); flex-shrink: 0; margin-top: 0.25rem;"></i>
-              <p style="font-size: 0.85rem; color: #15803d; font-weight: 500;">Your transaction is protected by 256-bit SSL encryption</p>
+              <p style="font-size: 0.85rem; color: #15803d; font-weight: 500;">Processed via HTTPS with server-side verification. Single charge only — no recurring billing.</p>
             </div>
           </div>
         </div>

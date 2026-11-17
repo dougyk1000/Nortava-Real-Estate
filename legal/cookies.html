@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cookie Policy - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <title>Cookie &amp; Storage Policy - Nortava</title>
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -31,53 +30,95 @@
   <main>
     <div class="page-header">
       <div class="container">
-        <h1 class="page-title">Cookie Policy</h1>
-        <p class="page-subtitle">Last updated: December 2024</p>
+        <h1 class="page-title">Cookie &amp; Browser Storage Policy</h1>
+        <p class="page-subtitle">Last updated: November 2026</p>
       </div>
     </div>
 
     <section class="section">
       <div class="container" style="max-width: 800px;">
         <div style="color: var(--text-secondary); line-height: 1.8;">
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">What Are Cookies?</h2>
-          <p style="margin-bottom: 2rem;">Cookies are small text files stored on your device when you visit a website. They help websites remember your preferences and provide a better user experience.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">1. Browser Storage Overview</h2>
+          <p style="margin-bottom: 1.5rem;">
+            Nortava avoids third-party advertising cookies, cross-site trackers, and session replay tools. Instead, we use minimal browser storage (`localStorage` and `sessionStorage`) strictly as described below. Non-essential preference storage and optional analytics remain disabled until you opt in.
+          </p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">How We Use Cookies</h2>
-          <p style="margin-bottom: 1rem;">Nortava uses cookies for:</p>
-          <ul style="margin-bottom: 2rem; margin-left: 1.5rem;">
-            <li><strong>Authentication:</strong> To keep you logged in across sessions</li>
-            <li><strong>Preferences:</strong> To remember your theme choice (light/dark mode)</li>
-            <li><strong>Session Management:</strong> To maintain your browsing session</li>
-            <li><strong>Security:</strong> To help prevent fraud and protect your account</li>
-          </ul>
-
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">Types of Cookies We Use</h2>
-          <div class="card" style="margin-bottom: 1rem;">
-            <h3 style="margin-bottom: 0.5rem;">Essential Cookies</h3>
-            <p style="color: var(--text-secondary);">Required for the platform to function. These cannot be disabled.</p>
-          </div>
-          <div class="card" style="margin-bottom: 1rem;">
-            <h3 style="margin-bottom: 0.5rem;">Preference Cookies</h3>
-            <p style="color: var(--text-secondary);">Store your preferences like theme settings.</p>
-          </div>
-          <div class="card" style="margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 0.5rem;">Local Storage</h3>
-            <p style="color: var(--text-secondary);">We use local storage to save your session data and preferences locally on your device.</p>
+          <div style="margin-bottom: 2rem;">
+            <button type="button" class="btn btn-primary" id="openCookieSettingsBtn">
+              <i class="ri-settings-3-line"></i> Manage Privacy &amp; Cookie Settings
+            </button>
           </div>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">Third-Party Cookies</h2>
-          <p style="margin-bottom: 2rem;">We do not use third-party tracking cookies or advertising cookies. We do not share your browsing data with advertisers.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">2. Storage Inventory</h2>
+          <div style="overflow-x: auto; margin-bottom: 2rem;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Key / Storage</th>
+                  <th>Category</th>
+                  <th>Purpose</th>
+                  <th>Consent Required?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>sb-*-auth-token</code> (localStorage)</td>
+                  <td>Essential</td>
+                  <td>Supabase authentication session token for signed-in users.</td>
+                  <td>No (Strictly Necessary)</td>
+                </tr>
+                <tr>
+                  <td><code>nortava-user</code> (localStorage)</td>
+                  <td>Essential</td>
+                  <td>Signed-in user summary for fast navigation rendering.</td>
+                  <td>No (Strictly Necessary)</td>
+                </tr>
+                <tr>
+                  <td><code>nortava-consent</code> (localStorage)</td>
+                  <td>Essential</td>
+                  <td>Stores your privacy and consent choices.</td>
+                  <td>No (Strictly Necessary)</td>
+                </tr>
+                <tr>
+                  <td><code>nortava-chat-history</code> (sessionStorage)</td>
+                  <td>Essential (Session)</td>
+                  <td>Keeps your current tab's help-assistant conversation until the tab closes.</td>
+                  <td>No (Session Functionality)</td>
+                </tr>
+                <tr>
+                  <td><code>nortava-notifications</code> (localStorage)</td>
+                  <td>Functional (Signed-in)</td>
+                  <td>Stores in-app dashboard notifications for signed-in accounts.</td>
+                  <td>No (Account Feature)</td>
+                </tr>
+                <tr>
+                  <td><code>nortava-theme</code> (localStorage)</td>
+                  <td>Preferences</td>
+                  <td>Remembers your light or dark theme selection across visits.</td>
+                  <td>Yes (Preferences Opt-In)</td>
+                </tr>
+                <tr>
+                  <td>Listing View Telemetry (<code>increment_views</code>)</td>
+                  <td>Analytics</td>
+                  <td>Counts aggregated listing page views. No session replay or personal profiling.</td>
+                  <td>Yes (Analytics Opt-In)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">Managing Cookies</h2>
-          <p style="margin-bottom: 2rem;">You can manage cookies through your browser settings. Note that disabling essential cookies may affect your ability to use Nortava. Most browsers allow you to:</p>
-          <ul style="margin-bottom: 2rem; margin-left: 1.5rem;">
-            <li>View and delete cookies</li>
-            <li>Block all or specific cookies</li>
-            <li>Set preferences for certain websites</li>
-          </ul>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">3. Third-Party Cookies &amp; External CDNs</h2>
+          <p style="margin-bottom: 2rem;">
+            All fonts (`Inter`) and icons (`RemixIcon`) are self-hosted inside our repository so third-party font CDNs do not receive your IP address on page load. We do not embed Google Analytics, Meta Pixel, PostHog, Hotjar, FullStory, Microsoft Clarity, or advertising cookies.
+          </p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">Contact Us</h2>
-          <p>If you have questions about our use of cookies, please <a href="/contact.html" style="color: var(--primary);">contact us</a>.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">4. Withdrawing Consent</h2>
+          <p style="margin-bottom: 2rem;">
+            You can change or withdraw your consent at any time by clicking <strong>Manage Privacy &amp; Cookie Settings</strong> above or <strong>Cookie Settings</strong> in any page footer. Turning off Preferences removes `nortava-theme` from browser storage immediately.
+          </p>
+
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">5. Contact Us</h2>
+          <p>If you have questions about browser storage or privacy, please <a href="/contact.html" style="color: var(--primary);">contact us</a>.</p>
         </div>
       </div>
     </section>
@@ -91,11 +132,17 @@
           <a href="/legal/terms.html">Terms</a>
           <a href="/legal/privacy.html">Privacy</a>
           <a href="/legal/cookies.html">Cookies</a>
+          <a href="/legal/dmca.html">DMCA</a>
         </div>
       </div>
     </div>
   </footer>
 
   <script type="module" src="/core/main.js"></script>
+  <script type="module">
+    document.getElementById('openCookieSettingsBtn')?.addEventListener('click', () => {
+      window.nortavaConsent?.openSettings();
+    });
+  </script>
 </body>
 </html>

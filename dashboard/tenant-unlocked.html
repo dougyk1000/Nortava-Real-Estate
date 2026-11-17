@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unlocked Contacts - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -82,6 +81,7 @@
   <script type="module">
     import { getUnlockedContacts, getCurrentUser } from '/core/api/api.js';
     import { logout } from '/core/auth/auth.js';
+    import { escapeHtml, sanitizePhone } from '/core/utils/sanitize.js';
     window.logout = logout;
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -90,13 +90,13 @@
         window.location.href = '/auth/login.html';
         return;
       }
-      loadUnlockedContacts();
+      loadUnlockedContacts(user.id);
     });
 
-    async function loadUnlockedContacts() {
-      const { data: unlocks } = await getUnlockedContacts();
+    async function loadUnlockedContacts(userId) {
+      const { data: unlocks } = await getUnlockedContacts(userId);
       const container = document.getElementById('unlockedContacts');
-      
+
       if (!unlocks || unlocks.length === 0) return;
 
       container.innerHTML = `
@@ -104,31 +104,29 @@
           ${unlocks.map(unlock => {
             const listing = unlock.listings;
             const landlord = listing?.users;
+            const cleanTel = sanitizePhone(landlord?.phone || '');
+            const cleanWa = cleanTel.replace(/^\+/, '');
             return `
               <div class="card" style="display: flex; gap: 1.5rem; align-items: center;">
                 <div style="flex: 1;">
-                  <h3 style="margin-bottom: 0.5rem;">${listing?.title || 'Property'}</h3>
+                  <h3 style="margin-bottom: 0.5rem;">${escapeHtml(listing?.title || 'Property')}</h3>
                   <p style="color: var(--text-tertiary); font-size: 0.875rem;">
-                    <i class="ri-map-pin-line"></i> ${listing?.location || 'N/A'}
+                    <i class="ri-map-pin-line"></i> ${escapeHtml(listing?.location || 'N/A')}
                   </p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.5rem; text-align: right;">
                   <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <i class="ri-user-line" style="color: var(--primary);"></i>
-                    <span>${landlord?.name || 'Landlord'}</span>
+                    <span>${escapeHtml(landlord?.name || 'Landlord')}</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <i class="ri-phone-line" style="color: var(--primary);"></i>
-                    <span>${landlord?.phone || 'N/A'}</span>
+                    <span>${escapeHtml(landlord?.phone || 'N/A')}</span>
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
-                  <a href="tel:${landlord?.phone}" class="btn btn-sm btn-primary">
-                    <i class="ri-phone-fill"></i> Call
-                  </a>
-                  <a href="https://wa.me/${landlord?.phone?.replace(/[^0-9]/g, '')}" class="btn btn-sm btn-success" target="_blank">
-                    <i class="ri-whatsapp-fill"></i> WhatsApp
-                  </a>
+                  ${cleanTel ? `<a href="tel:${escapeHtml(cleanTel)}" class="btn btn-sm btn-primary"><i class="ri-phone-fill"></i> Call</a>` : ''}
+                  ${cleanWa ? `<a href="https://wa.me/${escapeHtml(cleanWa)}" class="btn btn-sm btn-success" target="_blank" rel="noopener noreferrer"><i class="ri-whatsapp-fill"></i> WhatsApp</a>` : ''}
                 </div>
               </div>
             `;

@@ -53,7 +53,7 @@ const CHATBOT_RESPONSES = {
   landlord: {
     patterns: ['landlord', 'post listing', 'list property', 'add property', 'sell', 'rent out'],
     responses: [
-      "As a landlord on Nortava:\n\n1. Register for a free account as 'Landlord'\n2. Go to your dashboard\n3. Click 'Add Listing' and fill in property details\n4. Upload up to 3 photos\n5. Your listing goes live immediately!\n\nListing is completely free. You earn when tenants pay to unlock your contact.",
+      "As a landlord on Nortava:\n\n1. Register for a free account as 'Landlord'\n2. Go to your dashboard\n3. Click 'Add Listing' and fill in property details\n4. Upload up to 3 photos\n5. Your listing is submitted for moderation review and published once approved!\n\nListing is completely free. Tenants pay a one-time $2.50 fee to unlock your contact.",
       "Pro tip: Provide clear property descriptions and quality photos to attract tenants quickly. Respond promptly to inquiries to maintain trust."
     ]
   },

@@ -16,7 +16,6 @@
   <link rel="icon" type="image/jpeg" href="/assets/images/logo/nortava-logo.jpg">
   <link rel="apple-touch-icon" href="/assets/images/logo/nortava-logo.jpg">
   <title>Register - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -72,6 +71,31 @@
         </div>
 
         <div class="input-group">
+          <label>Date of Birth (Month &amp; Year) <span style="font-size: 0.78rem; color: var(--text-tertiary);">— Minimum age 18 (under 13 prohibited)</span></label>
+          <div class="age-gate-grid">
+            <select id="birthMonth" class="input" required aria-label="Birth Month">
+              <option value="">Month</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <input type="number" id="birthYear" class="input" placeholder="Birth Year (e.g. 1998)" min="1900" max="2026" required aria-label="Birth Year">
+          </div>
+          <p class="compliance-notice">
+            We collect only your birth month and year to enforce age eligibility (COPPA under-13 restriction and 18+ account requirement) on our server. Rejected under-age attempts are not stored.
+          </p>
+        </div>
+
+        <div class="input-group">
           <label for="password">Password</label>
           <div class="input-icon">
             <i class="ri-lock-line"></i>
@@ -89,7 +113,7 @@
 
         <label class="checkbox-group">
           <input type="checkbox" id="terms" required>
-          <span>I agree to the <a href="/legal/terms.html" style="color: var(--primary);">Terms of Service</a> and <a href="/legal/privacy.html" style="color: var(--primary);">Privacy Policy</a></span>
+          <span>I am at least 18 years old and agree to the <a href="/legal/terms.html" style="color: var(--primary);">Terms of Service</a>, <a href="/legal/privacy.html" style="color: var(--primary);">Privacy Policy</a>, and <a href="/legal/cookies.html" style="color: var(--primary);">Cookie Policy</a>.</span>
         </label>
 
         <button type="submit" class="btn btn-primary btn-lg">

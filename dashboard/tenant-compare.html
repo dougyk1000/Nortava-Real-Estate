@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Compare Properties - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -99,6 +98,8 @@
   <script type="module">
     import { getSavedListings, getCurrentUser } from '/core/api/api.js';
     import { logout } from '/core/auth/auth.js';
+    import { showToast } from '/core/utils/toast.js';
+    import { escapeHtml, safeImageUrl } from '/core/utils/sanitize.js';
     window.logout = logout;
 
     let savedListings = [];
@@ -112,8 +113,8 @@
       }
 
       const { data } = await getSavedListings();
-      savedListings = data || [];
-      
+      savedListings = (data || []).filter(item => item.listings);
+
       if (savedListings.length === 0) {
         document.getElementById('emptyState').style.display = 'block';
         document.getElementById('propertySelector').parentElement.style.display = 'none';
@@ -127,29 +128,33 @@
       const container = document.getElementById('propertySelector');
       container.innerHTML = savedListings.map(item => {
         const listing = item.listings;
-        const image = listing.listing_images?.[0]?.image_url;
+        const image = safeImageUrl(listing.listing_images?.[0]?.image_url);
         return `
           <label class="comparison-select-item" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; transition: all var(--transition); min-width: 250px;">
-            <input type="checkbox" value="${listing.id}" onchange="toggleProperty('${listing.id}')" style="width: 20px; height: 20px; accent-color: var(--primary);">
-            ${image ? `<img src="${image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 50px; height: 50px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-image-line"></i></div>'}
+            <input type="checkbox" value="${escapeHtml(listing.id)}" data-compare-id="${escapeHtml(listing.id)}" style="width: 20px; height: 20px; accent-color: var(--primary);">
+            ${image ? `<img src="${escapeHtml(image)}" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 50px; height: 50px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-image-line"></i></div>'}
             <div>
-              <div style="font-weight: 600;">$${listing.price}${listing.type === 'rent' ? '/mo' : ''}</div>
-              <div style="font-size: 0.875rem; color: var(--text-secondary);">${listing.title.substring(0, 25)}...</div>
+              <div style="font-weight: 600;">$${escapeHtml(listing.price)}${listing.type === 'rent' ? '/mo' : ''}</div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary);">${escapeHtml((listing.title || '').substring(0, 25))}...</div>
             </div>
           </label>
         `;
       }).join('');
+
+      container.querySelectorAll('[data-compare-id]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => window.toggleProperty(checkbox.dataset.compareId, checkbox));
+      });
     }
 
-    window.toggleProperty = function(listingId) {
+    window.toggleProperty = function(listingId, checkbox) {
       const idx = selectedProperties.indexOf(listingId);
       if (idx > -1) {
         selectedProperties.splice(idx, 1);
       } else if (selectedProperties.length < 3) {
         selectedProperties.push(listingId);
       } else {
-        alert('You can only compare up to 3 properties');
-        event.target.checked = false;
+        showToast('Selection Limit', 'You can only compare up to 3 properties', 'warning');
+        if (checkbox) checkbox.checked = false;
         return;
       }
       updateComparison();
@@ -161,33 +166,36 @@
         table.style.display = 'none';
         return;
       }
-      
+
       table.style.display = 'block';
       const properties = selectedProperties.map(id => savedListings.find(s => s.listings.id === id)?.listings).filter(Boolean);
-      
+
       properties.forEach((p, i) => {
-        document.getElementById(`col${i+1}Header`).textContent = p.title.substring(0, 20) + '...';
+        document.getElementById(`col${i + 1}Header`).textContent = `${(p.title || '').substring(0, 20)}...`;
       });
-      
+
       const features = [
-        { label: 'Image', getValue: p => p.listing_images?.[0]?.image_url ? `<img src="${p.listing_images[0].image_url}" style="width: 100px; height: 75px; object-fit: cover; border-radius: var(--radius);">` : 'No image' },
-        { label: 'Price', getValue: p => `$${p.price}${p.type === 'rent' ? '/month' : ''}` },
+        { label: 'Image', getValue: p => {
+          const img = safeImageUrl(p.listing_images?.[0]?.image_url);
+          return img ? `<img src="${escapeHtml(img)}" alt="" style="width: 100px; height: 75px; object-fit: cover; border-radius: var(--radius);">` : 'No image';
+        }},
+        { label: 'Price', getValue: p => `$${escapeHtml(p.price)}${p.type === 'rent' ? '/month' : ''}` },
         { label: 'Type', getValue: p => p.type === 'rent' ? 'For Rent' : 'For Sale' },
-        { label: 'Location', getValue: p => p.location },
-        { label: 'Bedrooms', getValue: p => `${p.rooms} bed${p.rooms > 1 ? 's' : ''}` },
-        { label: 'Bathrooms', getValue: p => `${p.bathrooms || 1} bath${(p.bathrooms || 1) > 1 ? 's' : ''}` },
-        { label: 'Size', getValue: p => p.size ? `${p.size} sqft` : 'N/A' },
+        { label: 'Location', getValue: p => escapeHtml(p.location) },
+        { label: 'Bedrooms', getValue: p => `${escapeHtml(p.rooms)} bed${p.rooms > 1 ? 's' : ''}` },
+        { label: 'Bathrooms', getValue: p => `${escapeHtml(p.bathrooms || 1)} bath${(p.bathrooms || 1) > 1 ? 's' : ''}` },
+        { label: 'Size', getValue: p => p.size ? `${escapeHtml(p.size)} sqft` : 'N/A' },
         { label: 'Furnished', getValue: p => p.furnished ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
         { label: 'Water', getValue: p => p.water ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
         { label: 'Electricity', getValue: p => p.electricity ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
         { label: 'Parking', getValue: p => p.parking ? '<i class="ri-check-line" style="color: var(--success);"></i>' : '<i class="ri-close-line" style="color: var(--danger);"></i>' },
-        { label: 'Action', getValue: p => `<a href="/listing.html?id=${p.id}" class="btn btn-sm btn-primary">View</a>` }
+        { label: 'Action', getValue: p => `<a href="/listing.html?id=${encodeURIComponent(p.id)}" class="btn btn-sm btn-primary">View</a>` }
       ];
-      
+
       const tbody = document.getElementById('comparisonBody');
       tbody.innerHTML = features.map(f => `
         <tr>
-          <td style="font-weight: 600;">${f.label}</td>
+          <td style="font-weight: 600;">${escapeHtml(f.label)}</td>
           ${properties.map(p => `<td>${f.getValue(p)}</td>`).join('')}
           ${properties.length < 3 ? '<td></td>'.repeat(3 - properties.length) : ''}
         </tr>

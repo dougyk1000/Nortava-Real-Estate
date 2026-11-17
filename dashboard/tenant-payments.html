@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment History - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -92,7 +91,10 @@
   <script type="module">
     import { getPaymentHistory, getCurrentUser } from '/core/api/api.js';
     import { logout } from '/core/auth/auth.js';
+    import { escapeHtml, safeImageUrl } from '/core/utils/sanitize.js';
     window.logout = logout;
+
+    let cachedPayments = [];
 
     async function init() {
       const user = await getCurrentUser();
@@ -102,20 +104,21 @@
       }
 
       const { data: payments } = await getPaymentHistory(user.id);
-      
-      document.getElementById('totalSpent').textContent = `$${(payments?.length || 0) * 2.50}`;
-      document.getElementById('totalUnlocks').textContent = payments?.length || 0;
-      
+      cachedPayments = payments || [];
+
+      document.getElementById('totalSpent').textContent = `$${(cachedPayments.length * 2.5).toFixed(2)}`;
+      document.getElementById('totalUnlocks').textContent = cachedPayments.length;
+
       const now = new Date();
-      const thisMonth = payments?.filter(p => new Date(p.unlocked_at).getMonth() === now.getMonth()).length || 0;
+      const thisMonth = cachedPayments.filter(p => new Date(p.unlocked_at).getMonth() === now.getMonth()).length;
       document.getElementById('thisMonth').textContent = thisMonth;
 
-      renderTransactions(payments || []);
+      renderTransactions(cachedPayments);
     }
 
     function renderTransactions(payments) {
       const container = document.getElementById('transactionsList');
-      
+
       if (payments.length === 0) {
         container.innerHTML = `
           <div class="empty-state" style="padding: 2rem;">
@@ -128,30 +131,30 @@
         return;
       }
 
-      container.innerHTML = payments.map(payment => {
+      container.innerHTML = payments.map((payment, idx) => {
         const date = new Date(payment.unlocked_at);
-        const image = payment.listings?.listing_images?.[0]?.image_url;
-        
+        const image = safeImageUrl(payment.listings?.listing_images?.[0]?.image_url);
+
         return `
           <div class="receipt-card">
             <div class="receipt-header">
               <div style="display: flex; align-items: center; gap: 1rem;">
-                ${image ? `<img src="${image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-home-line"></i></div>'}
+                ${image ? `<img src="${escapeHtml(image)}" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius);">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center;"><i class="ri-home-line"></i></div>'}
                 <div>
-                  <h4 style="margin-bottom: 0.25rem;">${payment.listings?.title || 'Property'}</h4>
-                  <p style="color: var(--text-secondary); font-size: 0.875rem;">${payment.listings?.location || 'Norton'}</p>
+                  <h4 style="margin-bottom: 0.25rem;">${escapeHtml(payment.listings?.title || 'Property')}</h4>
+                  <p style="color: var(--text-secondary); font-size: 0.875rem;">${escapeHtml(payment.listings?.location || 'Norton')}</p>
                 </div>
               </div>
-              <div class="receipt-amount">$${payment.amount || 2.50}</div>
+              <div class="receipt-amount">$${escapeHtml(payment.amount || '2.50')}</div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 0.875rem;">
               <div>
-                <span><i class="ri-calendar-line"></i> ${date.toLocaleDateString()}</span>
-                <span style="margin-left: 1rem;"><i class="ri-time-line"></i> ${date.toLocaleTimeString()}</span>
+                <span><i class="ri-calendar-line"></i> ${escapeHtml(date.toLocaleDateString())}</span>
+                <span style="margin-left: 1rem;"><i class="ri-time-line"></i> ${escapeHtml(date.toLocaleTimeString())}</span>
               </div>
               <div style="display: flex; gap: 0.5rem;">
-                <span class="badge badge-success">Completed</span>
-                <button class="btn btn-sm btn-secondary" onclick="downloadReceipt('${payment.id}', '${payment.listings?.title}', '${date.toLocaleDateString()}', '${payment.amount || 2.50}')">
+                <span class="badge badge-success">${escapeHtml(payment.status || 'Completed')}</span>
+                <button class="btn btn-sm btn-secondary" data-receipt-idx="${idx}">
                   <i class="ri-download-line"></i> Receipt
                 </button>
               </div>
@@ -159,6 +162,19 @@
           </div>
         `;
       }).join('');
+
+      container.querySelectorAll('[data-receipt-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = cachedPayments[Number(btn.dataset.receiptIdx)];
+          if (!p) return;
+          window.downloadReceipt(
+            p.id,
+            p.listings?.title || 'Property',
+            new Date(p.unlocked_at).toLocaleDateString(),
+            p.amount || '2.50'
+          );
+        });
+      });
     }
 
     window.downloadReceipt = function(id, property, date, amount) {

@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Saved Listings - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -83,6 +82,7 @@
     import { getSavedListings, unsaveListing, getCurrentUser } from '/core/api/api.js';
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
+    import { escapeHtml, safeImageUrl } from '/core/utils/sanitize.js';
     window.logout = logout;
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -97,38 +97,43 @@
     async function loadSavedListings() {
       const { data: saved } = await getSavedListings();
       const container = document.getElementById('savedListings');
-      
+
       if (!saved || saved.length === 0) return;
 
       container.innerHTML = `
         <div class="listings-grid">
           ${saved.map(item => {
             const listing = item.listings;
-            const image = listing?.listing_images?.[0]?.image_url || null;
+            if (!listing) return '';
+            const image = safeImageUrl(listing?.listing_images?.[0]?.image_url);
             return `
               <div class="card property-card" style="padding: 0;">
                 <div class="property-image">
-                  ${image 
-                    ? `<img src="${image}" alt="${listing.title}">`
+                  ${image
+                    ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(listing.title)}">`
                     : `<div style="width: 100%; height: 200px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;"><i class="ri-image-line" style="font-size: 2rem; color: var(--text-tertiary);"></i></div>`
                   }
-                  <span class="property-badge">${listing?.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
-                  <button class="property-favorite active" onclick="removeSaved('${listing.id}')"><i class="ri-heart-fill"></i></button>
+                  <span class="property-badge">${listing.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
+                  <button class="property-favorite active" data-remove-id="${escapeHtml(listing.id)}"><i class="ri-heart-fill"></i></button>
                 </div>
                 <div class="property-content">
-                  <div class="property-price">$${listing?.price || 0}</div>
-                  <h3 class="property-title">${listing?.title || 'N/A'}</h3>
+                  <div class="property-price">$${escapeHtml(listing.price || 0)}</div>
+                  <h3 class="property-title">${escapeHtml(listing.title || 'N/A')}</h3>
                   <div class="property-location">
                     <i class="ri-map-pin-line"></i>
-                    <span>${listing?.location || 'N/A'}</span>
+                    <span>${escapeHtml(listing.location || 'N/A')}</span>
                   </div>
-                  <a href="/listing.html?id=${listing?.id}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</a>
+                  <a href="/listing.html?id=${encodeURIComponent(listing.id)}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</a>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
       `;
+
+      container.querySelectorAll('[data-remove-id]').forEach(btn => {
+        btn.addEventListener('click', () => window.removeSaved(btn.dataset.removeId));
+      });
     }
 
     window.removeSaved = async function(listingId) {

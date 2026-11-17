@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Listings - Admin - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -76,25 +75,32 @@
 
   <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getAllListings, deleteListing, getCurrentUser } from '/core/api/api.js';
+    import { verifyAdminSession, getAdminOverview, adminDeleteListing, approveListing } from '/core/api/api.js';
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
+    import { escapeHtml } from '/core/utils/sanitize.js';
     window.logout = logout;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const user = await getCurrentUser();
-      if (!user || user.role !== 'admin') {
-        window.location.href = '/';
+      const session = await verifyAdminSession();
+      if (!session?.isAdmin) {
+        window.location.href = '/auth/login.html';
         return;
       }
       loadListings();
     });
 
     async function loadListings() {
-      const { data: listings } = await getAllListings();
+      const { data, error } = await getAdminOverview();
       const container = document.getElementById('listingsList');
-      
-      if (!listings || listings.length === 0) {
+      const listings = data?.listings || [];
+
+      if (error) {
+        container.innerHTML = `<p style="text-align: center; color: var(--danger); padding: 2rem;">${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      if (listings.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No listings found</p>';
         return;
       }
@@ -107,6 +113,7 @@
               <th>Type</th>
               <th>Price</th>
               <th>Location</th>
+              <th>Status</th>
               <th>Landlord</th>
               <th>Action</th>
             </tr>
@@ -114,31 +121,57 @@
           <tbody>
             ${listings.map(listing => `
               <tr>
-                <td>${listing.title}</td>
+                <td>${escapeHtml(listing.title)}</td>
                 <td>${listing.type === 'sale' ? 'For Sale' : 'For Rent'}</td>
-                <td>$${listing.price}</td>
-                <td>${listing.location}</td>
-                <td>${listing.users?.name || 'N/A'}</td>
-                <td>
-                  <a href="/listing.html?id=${listing.id}" class="btn btn-sm btn-secondary">View</a>
-                  <button class="btn btn-sm btn-danger" onclick="removeListing('${listing.id}')">Delete</button>
+                <td>$${escapeHtml(listing.price)}</td>
+                <td>${escapeHtml(listing.location)}</td>
+                <td><span class="badge ${listing.status === 'published' ? 'badge-success' : 'badge-warning'}">${escapeHtml(listing.status || 'pending')}</span></td>
+                <td>${escapeHtml(listing.users?.name || 'N/A')}</td>
+                <td style="display: flex; gap: 0.5rem;">
+                  <a href="/listing.html?id=${encodeURIComponent(listing.id)}" class="btn btn-sm btn-secondary">View</a>
+                  ${listing.status !== 'published' ? `<button class="btn btn-sm btn-success" data-approve-id="${escapeHtml(listing.id)}">Approve</button>` : ''}
+                  <button class="btn btn-sm btn-danger" data-delete-id="${escapeHtml(listing.id)}">Delete</button>
                 </td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       `;
+
+      container.querySelectorAll('[data-approve-id]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error: approveErr } = await approveListing(btn.dataset.approveId);
+          if (approveErr) {
+            showToast('Error', approveErr.message || 'Failed to approve listing', 'error');
+            return;
+          }
+          showToast('Approved', 'Listing published', 'success');
+          loadListings();
+        });
+      });
+
+      container.querySelectorAll('[data-delete-id]').forEach(btn => {
+        btn.addEventListener('click', () => window.removeListing(btn.dataset.deleteId, btn));
+      });
     }
 
-    window.removeListing = async function(listingId) {
-      if (!confirm('Are you sure you want to delete this listing?')) return;
-      
-      const { error } = await deleteListing(listingId);
-      if (error) {
-        showToast('Error', 'Failed to delete listing', 'error');
+    window.removeListing = async function(listingId, btnEl) {
+      if (btnEl && btnEl.dataset.confirmDelete !== 'true') {
+        btnEl.dataset.confirmDelete = 'true';
+        btnEl.textContent = 'Confirm?';
+        setTimeout(() => {
+          btnEl.dataset.confirmDelete = 'false';
+          btnEl.textContent = 'Delete';
+        }, 3500);
         return;
       }
-      
+
+      const { error } = await adminDeleteListing(listingId);
+      if (error) {
+        showToast('Error', error.message || 'Failed to delete listing', 'error');
+        return;
+      }
+
       showToast('Deleted', 'Listing removed', 'success');
       loadListings();
     };

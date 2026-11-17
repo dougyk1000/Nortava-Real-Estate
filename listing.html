@@ -17,8 +17,7 @@
   <link rel="icon" type="image/jpeg" href="assets/images/logo/nortava-logo.jpg">
   <link rel="apple-touch-icon" href="assets/images/logo/nortava-logo.jpg">
   <title>Property Details - Nortava</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
   <style>
     .listing-detail {
       padding: 8rem 0 4rem;
@@ -396,10 +395,10 @@
             <div id="unlockSection">
               <div class="unlock-box">
                 <div class="unlock-price">$2.50</div>
-                <p class="unlock-text">Unlock landlord contact details</p>
+                <p class="unlock-text">One-time fee to unlock landlord contact details (no subscription)</p>
               </div>
-              <a href="payment/pay.html?listing=sample" class="btn btn-primary btn-lg" style="width: 100%;">
-                <i class="ri-lock-unlock-line"></i> Unlock Contact
+              <a href="payment/pay.html?listing=sample" id="unlockBtnLink" class="btn btn-primary btn-lg" style="width: 100%;">
+                <i class="ri-lock-unlock-line"></i> Unlock Contact ($2.50 Once)
               </a>
             </div>
 
@@ -408,15 +407,15 @@
                 <h4><i class="ri-checkbox-circle-fill"></i> Contact Unlocked</h4>
                 <div class="contact-item">
                   <i class="ri-phone-line"></i>
-                  <span id="landlordPhone">+263 77 123 4567</span>
+                  <span id="landlordPhone">-</span>
                 </div>
                 <div class="contact-item">
                   <i class="ri-whatsapp-line"></i>
-                  <a href="#" id="whatsappLink">Chat on WhatsApp</a>
+                  <a href="#" id="whatsappLink" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
                 </div>
                 <div class="contact-item">
                   <i class="ri-mail-line"></i>
-                  <span id="landlordEmail">landlord@email.com</span>
+                  <span id="landlordEmail">-</span>
                 </div>
               </div>
             </div>
@@ -425,8 +424,11 @@
               <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" id="saveBtn">
                 <i class="ri-heart-line"></i> Save Property
               </button>
-              <a href="report.html" class="btn btn-ghost" style="width: 100%;">
+              <a href="report.html" id="reportListingLink" class="btn btn-ghost" style="width: 100%; margin-bottom: 0.25rem;">
                 <i class="ri-flag-line"></i> Report Listing
+              </a>
+              <a href="/legal/dmca.html" id="dmcaListingLink" class="btn btn-ghost" style="width: 100%; font-size: 0.85rem; color: var(--text-tertiary);">
+                <i class="ri-copyright-line"></i> Report Copyright / DMCA
               </a>
             </div>
           </div>
@@ -440,9 +442,10 @@
       <div class="footer-bottom">
         <p class="footer-copyright">2025 Nortava. All rights reserved.</p>
         <div class="footer-legal">
-          <a href="legal/terms.html">Terms</a>
-          <a href="legal/privacy.html">Privacy</a>
-          <a href="legal/cookies.html">Cookies</a>
+          <a href="/legal/terms.html">Terms</a>
+          <a href="/legal/privacy.html">Privacy</a>
+          <a href="/legal/cookies.html">Cookies</a>
+          <a href="/legal/dmca.html">DMCA</a>
         </div>
       </div>
     </div>
@@ -455,30 +458,49 @@
     <button class="gallery-nav next" onclick="nextImage()"><i class="ri-arrow-right-s-line"></i></button>
   </div>
 
-  <script type="module" src="core/main.js"></script>
+  <script type="module" src="/core/main.js"></script>
   <script type="module">
-    import { getSingleListing, checkIfUnlocked, getListingReviews, createReview, getCurrentUser, incrementListingViews } from './core/api/api.js';
-    import { showToast } from './core/utils/toast.js';
+    import {
+      getSingleListing,
+      checkIfUnlocked,
+      checkIfSaved,
+      saveListing,
+      unsaveListing,
+      getListingReviews,
+      createReview,
+      getCurrentUser,
+      incrementListingViews
+    } from '/core/api/api.js';
+    import { showToast } from '/core/utils/toast.js';
+    import { hasConsent } from '/core/utils/consent.js';
+    import { escapeHtml, safeImageUrl, sanitizePhone } from '/core/utils/sanitize.js';
 
     let listingId = null;
     let listingImages = [];
     let currentImageIndex = 0;
     let selectedRating = 0;
+    let isSaved = false;
 
     async function init() {
       const params = new URLSearchParams(window.location.search);
       listingId = params.get('id');
-      
+
       if (!listingId || listingId === 'sample') return;
-      
+
+      document.getElementById('unlockBtnLink').href = `payment/pay.html?listing=${encodeURIComponent(listingId)}`;
+      document.getElementById('reportListingLink').href = `report.html?listing=${encodeURIComponent(listingId)}`;
+      document.getElementById('dmcaListingLink').href = `/legal/dmca.html?listing=${encodeURIComponent(listingId)}`;
+
       const { data: listing, error } = await getSingleListing(listingId);
       if (error || !listing) {
         showToast('Error', 'Property not found', 'error');
         return;
       }
 
-      incrementListingViews(listingId);
-      
+      if (hasConsent('analytics')) {
+        incrementListingViews(listingId);
+      }
+
       document.getElementById('listingTitle').textContent = listing.title;
       document.getElementById('propertyTitle').textContent = listing.title;
       document.getElementById('propertyLocation').textContent = listing.location;
@@ -487,63 +509,111 @@
       document.getElementById('propertySize').textContent = listing.size || 'N/A';
       document.getElementById('propertyDescription').textContent = listing.description;
       document.getElementById('propertyViews').textContent = `${listing.views || 0} views`;
-      
+
       const priceEl = document.querySelector('.listing-price-large');
-      priceEl.innerHTML = listing.type === 'rent' ? `$${listing.price} <span>/month</span>` : `$${listing.price}`;
-      
+      const safePrice = escapeHtml(listing.price);
+      priceEl.innerHTML = listing.type === 'rent' ? `$${safePrice} <span>/month</span>` : `$${safePrice}`;
+
       const amenities = [];
       if (listing.furnished) amenities.push({ icon: 'ri-home-gear-line', label: 'Furnished' });
       if (listing.water) amenities.push({ icon: 'ri-drop-fill', label: 'Water Available' });
       if (listing.electricity) amenities.push({ icon: 'ri-flashlight-fill', label: 'Electricity' });
       if (listing.parking) amenities.push({ icon: 'ri-parking-fill', label: 'Parking' });
-      
+
       const amenitiesList = document.getElementById('amenitiesList');
       if (amenities.length > 0) {
         amenitiesList.innerHTML = amenities.map(a => `
           <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: var(--radius);">
             <i class="${a.icon}" style="color: var(--primary);"></i>
-            <span>${a.label}</span>
+            <span>${escapeHtml(a.label)}</span>
           </div>
         `).join('');
       } else {
         document.getElementById('amenitiesSection').style.display = 'none';
       }
-      
-      listingImages = listing.listing_images?.map(img => img.image_url) || [];
+
+      listingImages = (listing.listing_images || [])
+        .map(img => safeImageUrl(img.image_url))
+        .filter(Boolean);
       renderGallery();
-      
+
       if (listing.users) {
         document.getElementById('landlordName').textContent = listing.users.name || 'Landlord';
       }
-      
+
       const user = await getCurrentUser();
       if (user) {
-        const { data: unlocked } = await checkIfUnlocked(listingId);
-        if (unlocked) {
+        const { unlocked, landlordContact } = await checkIfUnlocked(listingId);
+        if (unlocked && landlordContact) {
           document.getElementById('unlockSection').style.display = 'none';
           document.getElementById('contactSection').style.display = 'block';
-          document.getElementById('landlordPhone').textContent = listing.users?.phone || 'N/A';
-          document.getElementById('landlordEmail').textContent = listing.users?.email || 'N/A';
+          document.getElementById('landlordPhone').textContent = landlordContact.phone || 'Not provided';
+          document.getElementById('landlordEmail').textContent = landlordContact.email || 'Not provided';
+          const cleanPhone = sanitizePhone(landlordContact.phone || '').replace(/^\+/, '');
+          const waLink = document.getElementById('whatsappLink');
+          if (cleanPhone) {
+            waLink.href = `https://wa.me/${cleanPhone}`;
+          } else {
+            waLink.style.display = 'none';
+          }
         }
         document.getElementById('writeReview').style.display = 'block';
+        isSaved = await checkIfSaved(listingId);
+        updateSaveBtn();
       }
-      
+
+      setupSaveButton();
       loadReviews();
       setupRatingInput();
+    }
+
+    function updateSaveBtn() {
+      const btn = document.getElementById('saveBtn');
+      if (!btn) return;
+      btn.innerHTML = isSaved
+        ? '<i class="ri-heart-fill" style="color: var(--danger);"></i> Saved'
+        : '<i class="ri-heart-line"></i> Save Property';
+    }
+
+    function setupSaveButton() {
+      const btn = document.getElementById('saveBtn');
+      btn?.addEventListener('click', async () => {
+        const user = await getCurrentUser();
+        if (!user) {
+          showToast('Login Required', 'Please sign in to save properties', 'warning');
+          setTimeout(() => { window.location.href = '/auth/login.html'; }, 1200);
+          return;
+        }
+        if (isSaved) {
+          const { error } = await unsaveListing(listingId);
+          if (!error) {
+            isSaved = false;
+            updateSaveBtn();
+            showToast('Removed', 'Property removed from saved list', 'success');
+          }
+        } else {
+          const { error } = await saveListing(listingId);
+          if (!error) {
+            isSaved = true;
+            updateSaveBtn();
+            showToast('Saved', 'Property added to your saved list', 'success');
+          }
+        }
+      });
     }
 
     function renderGallery() {
       const gallery = document.getElementById('listingGallery');
       if (listingImages.length === 0) return;
-      
+
       gallery.innerHTML = `
         <div class="gallery-main" onclick="openGallery(0)" style="cursor: pointer;">
-          <img src="${listingImages[0]}" alt="Property main">
+          <img src="${escapeHtml(listingImages[0])}" alt="Property main">
         </div>
         <div class="gallery-side">
           ${listingImages.slice(1, 3).map((img, i) => `
             <div class="gallery-thumb" onclick="openGallery(${i + 1})" style="cursor: pointer;">
-              <img src="${img}" alt="Property ${i + 2}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="${escapeHtml(img)}" alt="Property ${i + 2}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
           `).join('')}
           ${listingImages.length <= 1 ? '<div class="gallery-thumb"><i class="ri-image-line" style="font-size: 2rem;"></i></div>'.repeat(2 - listingImages.slice(1).length) : ''}
@@ -575,32 +645,36 @@
     async function loadReviews() {
       const { data: reviews } = await getListingReviews(listingId);
       const container = document.getElementById('reviewsList');
-      
+
       if (!reviews?.length) {
         container.innerHTML = '<p style="color: var(--text-secondary);">No reviews yet. Be the first to review!</p>';
         return;
       }
-      
+
       const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
       document.getElementById('avgRating').innerHTML = renderStars(avg) + ` <span style="margin-left: 0.5rem; color: var(--text-secondary);">(${reviews.length} reviews)</span>`;
-      
-      container.innerHTML = reviews.map(review => `
-        <div class="review-card">
-          <div class="review-header">
-            <div class="review-avatar">${(review.users?.name || 'U')[0].toUpperCase()}</div>
-            <div>
-              <div style="font-weight: 600;">${review.users?.name || 'Anonymous'}</div>
-              <div style="font-size: 0.875rem; color: var(--text-secondary);">${new Date(review.created_at).toLocaleDateString()}</div>
+
+      container.innerHTML = reviews.map(review => {
+        const authorName = review.users?.name || 'Anonymous';
+        const initial = escapeHtml(authorName.charAt(0).toUpperCase() || 'U');
+        return `
+          <div class="review-card">
+            <div class="review-header">
+              <div class="review-avatar">${initial}</div>
+              <div>
+                <div style="font-weight: 600;">${escapeHtml(authorName)}</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">${escapeHtml(new Date(review.created_at).toLocaleDateString())}</div>
+              </div>
+              <div style="margin-left: auto;">${renderStars(review.rating)}</div>
             </div>
-            <div style="margin-left: auto;">${renderStars(review.rating)}</div>
+            <p style="color: var(--text-secondary);">${escapeHtml(review.comment)}</p>
           </div>
-          <p style="color: var(--text-secondary);">${review.comment}</p>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderStars(rating) {
-      return Array(5).fill(0).map((_, i) => 
+      return Array(5).fill(0).map((_, i) =>
         `<i class="ri-star-${i < Math.round(rating) ? 'fill' : 'line'}" style="color: var(--accent);"></i>`
       ).join('');
     }
@@ -609,20 +683,20 @@
       const stars = document.querySelectorAll('#ratingInput i');
       stars.forEach(star => {
         star.addEventListener('click', () => {
-          selectedRating = parseInt(star.dataset.rating);
+          selectedRating = parseInt(star.dataset.rating, 10);
           stars.forEach((s, i) => {
             s.className = i < selectedRating ? 'ri-star-fill' : 'ri-star-line';
           });
         });
       });
-      
+
       document.getElementById('submitReviewBtn')?.addEventListener('click', async () => {
-        const comment = document.getElementById('reviewComment').value;
+        const comment = document.getElementById('reviewComment').value.trim();
         if (!selectedRating) {
           showToast('Error', 'Please select a rating', 'error');
           return;
         }
-        
+
         const { error } = await createReview(listingId, selectedRating, comment);
         if (error) {
           showToast('Error', error.message || 'Failed to submit review', 'error');

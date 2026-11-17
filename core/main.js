@@ -1,14 +1,16 @@
 import { initTheme, setupThemeToggle } from './utils/theme.js';
+import { initConsentManager } from './utils/consent.js';
 import { initNavigation, updateNavForAuth } from './utils/navigation.js';
 import { initChatbot } from './chatbot/chatbot.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initConsentManager();
   initTheme();
   setupThemeToggle();
   initNavigation();
   updateNavForAuth();
   initChatbot();
-  
+
   observeAnimations();
 });
 
@@ -21,7 +23,7 @@ function observeAnimations() {
       }
     });
   }, { threshold: 0.1 });
-  
+
   document.querySelectorAll('.card, .feature-card, .step-card, .stat-card').forEach(el => {
     el.style.opacity = '0';
     observer.observe(el);

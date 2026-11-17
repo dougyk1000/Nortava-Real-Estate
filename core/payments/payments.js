@@ -4,7 +4,23 @@ import { showToast } from '../utils/toast.js';
 document.addEventListener('DOMContentLoaded', () => {
   setupPaymentForm();
   setupPaymentOptions();
+  checkGatewayStatus();
 });
+
+async function checkGatewayStatus() {
+  const notice = document.getElementById('gatewayStatusNotice');
+  if (!notice) return;
+  try {
+    const res = await fetch('/api/public-config');
+    if (!res.ok) return;
+    const cfg = await res.json();
+    if (!cfg.paymentsConfigured && !cfg.paymentsSandbox) {
+      notice.style.display = 'block';
+    }
+  } catch {
+    // Ignore
+  }
+}
 
 function setupPaymentOptions() {
   const options = document.querySelectorAll('.payment-option');
@@ -22,7 +38,7 @@ function setupPaymentForm() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const user = await getCurrentUser();
     if (!user) {
       showToast('Login Required', 'Please login to make a payment', 'warning');
@@ -34,33 +50,39 @@ function setupPaymentForm() {
 
     const params = new URLSearchParams(window.location.search);
     const listingId = params.get('listing');
-    const method = document.querySelector('input[name="method"]:checked').value;
-    const phone = document.getElementById('phone').value;
-    
+    const method = document.querySelector('input[name="method"]:checked')?.value;
+    const phone = document.getElementById('phone')?.value.trim();
+    const oneTimeAcknowledged = Boolean(document.getElementById('oneTimeConsent')?.checked);
+
+    if (!oneTimeAcknowledged) {
+      showToast('Confirmation Required', 'Please confirm you understand this is a one-time, non-recurring $2.50 fee.', 'warning');
+      return;
+    }
+
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
 
-    const { data: payment, error } = await createPayment(listingId, 2.50, method);
+    try {
+      const { data: payment, error } = await createPayment(listingId, method, phone, oneTimeAcknowledged);
 
-    if (error) {
-      showToast('Error', error.message, 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="ri-secure-payment-line"></i> Pay $2.50';
-      return;
-    }
+      if (error || !payment) {
+        showToast('Payment Unavailable', error?.message || 'Unable to initiate payment', 'error');
+        return;
+      }
 
-    showToast('Processing', 'Please confirm payment on your phone...', 'info');
-
-    setTimeout(async () => {
+      showToast('Verifying', 'Confirming payment status with server...', 'info');
       const { data: verified, error: verifyError } = await verifyPayment(payment.reference);
-      
-      if (verifyError) {
+
+      if (verifyError || !verified) {
         window.location.href = '/payment/problem.html';
         return;
       }
 
-      window.location.href = '/payment/success.html?ref=' + payment.reference;
-    }, 3000);
+      window.location.href = `/payment/success.html?ref=${encodeURIComponent(payment.reference)}`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="ri-secure-payment-line"></i> Complete Payment $2.50';
+    }
   });
 }
