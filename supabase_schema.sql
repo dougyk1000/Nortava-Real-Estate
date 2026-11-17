@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT DEFAULT 'tenant' CHECK (role IN ('tenant', 'landlord', 'admin')),
   verified BOOLEAN DEFAULT false,
   verification_tier TEXT CHECK (verification_tier IN ('bronze', 'silver', 'gold') OR verification_tier IS NULL),
+  verification_status TEXT DEFAULT 'unverified' CHECK (verification_status IN ('unverified', 'pending', 'approved', 'rejected')),
   age_verified BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -21,6 +22,40 @@ CREATE OR REPLACE VIEW public_profiles AS
   FROM users;
 
 GRANT SELECT ON public_profiles TO anon, authenticated;
+
+-- Landlord KYC & Ownership Verification (Title Deeds, National ID, Anti-Scam Hash & AI/Admin Audit)
+CREATE TABLE IF NOT EXISTS landlord_verifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  national_id_number TEXT NOT NULL,
+  ownership_capacity TEXT NOT NULL DEFAULT 'owner' CHECK (ownership_capacity IN ('owner', 'cession_holder', 'authorized_representative', 'registered_agent')),
+  property_province TEXT,
+  property_city TEXT,
+  property_area TEXT,
+  property_address TEXT NOT NULL,
+  title_deed_path TEXT NOT NULL,
+  national_id_path TEXT NOT NULL,
+  rates_bill_path TEXT,
+  title_deed_sha256 TEXT NOT NULL,
+  national_id_sha256 TEXT NOT NULL,
+  anti_fraud_attested BOOLEAN NOT NULL DEFAULT false,
+  duplicate_warnings JSONB DEFAULT '[]'::jsonb,
+  ai_status TEXT DEFAULT 'pending_ai_screening',
+  ai_confidence INTEGER DEFAULT 0,
+  ai_document_match BOOLEAN,
+  ai_extracted_owner TEXT,
+  ai_extracted_id TEXT,
+  ai_extracted_property TEXT,
+  ai_red_flags JSONB DEFAULT '[]'::jsonb,
+  ai_summary TEXT,
+  ai_screened_at TIMESTAMPTZ,
+  admin_status TEXT NOT NULL DEFAULT 'pending' CHECK (admin_status IN ('pending', 'approved', 'rejected')),
+  rejection_reason TEXT,
+  reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- Listings
 CREATE TABLE IF NOT EXISTS listings (
@@ -145,6 +180,7 @@ CREATE TABLE IF NOT EXISTS email_suppression (
 
 -- Enable Row Level Security on ALL tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE landlord_verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listing_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unlocks ENABLE ROW LEVEL SECURITY;
@@ -175,6 +211,9 @@ $$;
 CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_location ON listings(location);
 CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
+CREATE INDEX IF NOT EXISTS idx_landlord_verifications_status ON landlord_verifications(admin_status);
+CREATE INDEX IF NOT EXISTS idx_landlord_verifications_deed_hash ON landlord_verifications(title_deed_sha256);
+CREATE INDEX IF NOT EXISTS idx_landlord_verifications_nat_id ON landlord_verifications(national_id_number);
 CREATE INDEX IF NOT EXISTS idx_unlocks_user_id ON unlocks(user_id);
 CREATE INDEX IF NOT EXISTS idx_unlocks_listing_id ON unlocks(listing_id);
 CREATE INDEX IF NOT EXISTS idx_unlocks_payment_ref ON unlocks(payment_ref);

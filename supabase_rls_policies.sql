@@ -202,5 +202,14 @@ CREATE POLICY "Users can update their own notifications" ON notifications
 CREATE POLICY "Users can delete their own notifications" ON notifications
   FOR DELETE USING (auth.uid() = user_id);
 
--- 10. SERVER-ONLY TABLES (contact_messages, dmca_reports, email_suppression)
+-- 10. LANDLORD VERIFICATIONS (Strict KYC Privacy: own row read-only/pending only; admin approval via service_role)
+DROP POLICY IF EXISTS "Landlords can view their own verification record" ON landlord_verifications;
+CREATE POLICY "Landlords can view their own verification record" ON landlord_verifications
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Private storage bucket: create private bucket `landlord-documents` (non-public).
+-- Client SDKs have zero public/anon storage policies on `landlord-documents`;
+-- all uploads and admin document downloads run exclusively through server endpoints using SUPABASE_SERVICE_ROLE_KEY.
+
+-- 11. SERVER-ONLY TABLES (contact_messages, dmca_reports, email_suppression)
 -- RLS is enabled with zero client policies; only server-side SUPABASE_SERVICE_ROLE_KEY may write/read.

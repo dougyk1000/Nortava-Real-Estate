@@ -70,6 +70,16 @@
           <h1 class="dashboard-title">Add New Listing</h1>
         </div>
 
+        <div id="unverifiedWarningBanner" class="card" style="display: none; max-width: 800px; margin-bottom: 1.5rem; border-left: 4px solid var(--warning); background: rgba(245, 158, 11, 0.08);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <strong><i class="ri-shield-keyhole-line" style="color: var(--warning);"></i> Verification Required Before Publishing</strong>
+              <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-secondary);">Listings remain in moderation until your Title Deed &amp; Zimbabwe National ID are approved.</p>
+            </div>
+            <a href="/dashboard/landlord.html#verificationCard" class="btn btn-sm btn-primary">Check Verification Status</a>
+          </div>
+        </div>
+
         <form class="card" id="addListingForm" style="max-width: 800px;">
           <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Property Details</h2>
           
@@ -88,11 +98,17 @@
             </div>
 
             <div class="input-group">
-              <label for="price">Price (USD)</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label for="price" style="margin: 0;">Price (USD)</label>
+                <button type="button" id="suggestPriceBtn" class="btn btn-sm btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                  <i class="ri-magic-line"></i> Suggest Price
+                </button>
+              </div>
               <div class="input-icon">
                 <i class="ri-money-dollar-circle-line"></i>
                 <input type="number" id="price" class="input" placeholder="150" required min="1">
               </div>
+              <div id="priceSuggestionContainer" style="margin-top: 0.75rem;"></div>
             </div>
 
             <div class="input-group">
@@ -121,11 +137,24 @@
             </div>
 
             <div class="input-group">
-              <label for="location">Location in Norton</label>
-              <div class="input-icon">
-                <i class="ri-map-pin-line"></i>
-                <input type="text" id="location" class="input" placeholder="e.g., Katanga, Norton" required>
-              </div>
+              <label for="province">Province</label>
+              <select id="province" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="city">City / Town / District</label>
+              <select id="city" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="area">Suburb / Area</label>
+              <select id="area" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="locationDetail">Street / Phase / Custom Area (Optional)</label>
+              <input type="text" id="locationDetail" class="input" placeholder="Optional street, phase, or stand">
+              <small id="locationPreview" style="color: var(--text-tertiary); font-size: 0.78rem;"></small>
             </div>
 
             <div class="input-group" style="grid-column: span 2;">
@@ -184,12 +213,52 @@
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
     import { safeImageUrl, escapeHtml } from '/core/utils/sanitize.js';
+    import { calculateRecommendedPrice, renderPriceRecommendationWidget } from '/core/pricing/pricing.js';
+    import { initListingLocationPicker } from '/core/locations/locationSelector.js';
     window.logout = logout;
+
+    const locationPicker = initListingLocationPicker({
+      provinceEl: document.getElementById('province'),
+      cityEl: document.getElementById('city'),
+      areaEl: document.getElementById('area'),
+      detailEl: document.getElementById('locationDetail'),
+      previewEl: document.getElementById('locationPreview'),
+      defaultProvince: 'Mashonaland West',
+      defaultCity: 'Norton'
+    });
 
     document.addEventListener('DOMContentLoaded', async () => {
       const user = await getCurrentUser();
       if (!user) {
         window.location.href = '/auth/login.html';
+        return;
+      }
+      if (!user.verified) {
+        const banner = document.getElementById('unverifiedWarningBanner');
+        if (banner) banner.style.display = 'block';
+      }
+    });
+
+    document.getElementById('suggestPriceBtn')?.addEventListener('click', () => {
+      const listingData = {
+        location: locationPicker.getLocationString() || 'Harare, Harare',
+        rooms: parseInt(document.getElementById('rooms')?.value || '2', 10),
+        size: parseInt(document.getElementById('size')?.value || '650', 10),
+        type: document.getElementById('type')?.value || 'rent',
+        furnished: document.getElementById('furnished')?.checked,
+        water: document.getElementById('water')?.checked,
+        electricity: document.getElementById('electricity')?.checked,
+        parking: document.getElementById('parking')?.checked
+      };
+      const container = document.getElementById('priceSuggestionContainer');
+      const pricing = calculateRecommendedPrice(listingData);
+      if (container) {
+        container.innerHTML = renderPriceRecommendationWidget(listingData) +
+          `<button type="button" id="applySuggestedPriceBtn" class="btn btn-sm btn-primary" style="margin-top: 0.75rem;">Use $${escapeHtml(pricing.recommended)}</button>`;
+        document.getElementById('applySuggestedPriceBtn')?.addEventListener('click', () => {
+          document.getElementById('price').value = pricing.recommended;
+          showToast('Applied', `Price set to suggested $${pricing.recommended}`, 'success');
+        });
       }
     });
 
@@ -276,6 +345,14 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
 
+      const resolvedLocation = locationPicker.getLocationString();
+      if (!resolvedLocation) {
+        showToast('Missing Location', 'Please select Province, City/Town, and Suburb.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="ri-check-line"></i> Publish Listing';
+        return;
+      }
+
       const listingData = {
         title: document.getElementById('title').value.trim(),
         type: document.getElementById('type').value,
@@ -283,7 +360,7 @@
         rooms: parseInt(document.getElementById('rooms').value, 10),
         bathrooms: parseInt(document.getElementById('bathrooms').value, 10),
         size: document.getElementById('size').value || null,
-        location: document.getElementById('location').value.trim(),
+        location: resolvedLocation,
         description: document.getElementById('description').value.trim(),
         furnished: document.getElementById('furnished').checked,
         water: document.getElementById('water').checked,

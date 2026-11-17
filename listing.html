@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="View detailed property information on Nortava - Find your perfect rental or property for sale in Norton, Zimbabwe.">
-  <meta name="keywords" content="property details, real estate, rental property, Norton Zimbabwe, house for rent, apartment">
+  <meta name="description" content="View detailed verified property information on Nortava - Find rentals and properties for sale across Zimbabwe.">
+  <meta name="keywords" content="property details, real estate Zimbabwe, rental property, house for rent, apartment">
   <meta name="author" content="Douglas Kowo">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Property Details - Nortava">
-  <meta property="og:description" content="View detailed property information and connect with landlords.">
+  <meta property="og:description" content="View detailed verified property information and connect directly with landlords across Zimbabwe.">
   <meta property="og:image" content="assets/images/logo/nortava-logo.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Property Details">
@@ -270,6 +270,14 @@
         <span id="listingTitle">Property Details</span>
       </nav>
 
+      <div id="listingNotFound" class="card" style="display: none; text-align: center; padding: 3rem 1.5rem; margin-bottom: 2rem;">
+        <i class="ri-home-line" style="font-size: 3rem; color: var(--text-tertiary);"></i>
+        <h2 style="margin: 1rem 0 0.5rem;">Property Not Found</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">This listing may have been removed, is pending moderation, or the link is invalid.</p>
+        <a href="/listings.html" class="btn btn-primary"><i class="ri-search-line"></i> Browse Live Listings</a>
+      </div>
+
+      <div id="listingMainWrapper">
       <div class="listing-gallery" id="listingGallery">
         <div class="gallery-main">
           <i class="ri-image-line" style="font-size: 4rem;"></i>
@@ -286,52 +294,45 @@
 
       <div class="listing-content">
         <div class="listing-info">
-          <h1 id="propertyTitle">Spacious 2 Bedroom House in Katanga</h1>
+          <h1 id="propertyTitle">Loading property...</h1>
           <div class="listing-meta">
             <div class="listing-meta-item">
               <i class="ri-map-pin-line"></i>
-              <span id="propertyLocation">Katanga, Norton</span>
+              <span id="propertyLocation">-</span>
             </div>
             <div class="listing-meta-item">
               <i class="ri-time-line"></i>
-              <span id="propertyDate">Listed 2 days ago</span>
+              <span id="propertyDate">-</span>
             </div>
             <div class="listing-meta-item">
               <i class="ri-eye-line"></i>
-              <span id="propertyViews">45 views</span>
+              <span id="propertyViews">0 views</span>
             </div>
           </div>
 
-          <div class="listing-price-large">$150 <span>/month</span></div>
+          <div class="listing-price-large">$0 <span></span></div>
 
           <div class="listing-features-grid">
             <div class="listing-feature-box">
               <i class="ri-hotel-bed-line"></i>
-              <strong id="bedroomCount">2</strong>
+              <strong id="bedroomCount">-</strong>
               <span>Bedrooms</span>
             </div>
             <div class="listing-feature-box">
               <i class="ri-drop-line"></i>
-              <strong id="bathroomCount">1</strong>
+              <strong id="bathroomCount">-</strong>
               <span>Bathrooms</span>
             </div>
             <div class="listing-feature-box">
               <i class="ri-ruler-line"></i>
-              <strong id="propertySize">850</strong>
-              <span>Sq metres</span>
+              <strong id="propertySize">-</strong>
+              <span>Sq ft</span>
             </div>
           </div>
 
           <div class="listing-description">
             <h3>About This Property</h3>
-            <p id="propertyDescription">
-              This spacious 2-bedroom house is located in the quiet neighborhood of Katanga, Norton. 
-              Perfect for a small family or professionals looking for a comfortable living space. 
-              The property features a well-maintained garden, secure parking, and easy access to local amenities including schools, shops, and public transport.
-              <br><br>
-              The house includes a modern kitchen, spacious living area, and a private backyard. 
-              Water and electricity are included in the rent. Available for immediate occupation.
-            </p>
+            <p id="propertyDescription">Loading property description...</p>
           </div>
 
           <div style="margin-top: 2rem;" id="amenitiesSection">
@@ -340,15 +341,7 @@
             </div>
           </div>
 
-          <div style="margin-top: 2rem;">
-            <h3 style="margin-bottom: 1rem;">Location</h3>
-            <div style="height: 300px; background: var(--bg-tertiary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
-              <div style="text-align: center;">
-                <i class="ri-map-2-line" style="font-size: 3rem;"></i>
-                <p style="margin-top: 0.5rem;">Map Placeholder</p>
-              </div>
-            </div>
-          </div>
+          <div id="neighborhoodContainer"></div>
 
           <div style="margin-top: 2rem;" id="reviewsSection">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -385,10 +378,10 @@
               </div>
               <div class="landlord-details">
                 <h4>
-                  <span id="landlordName">John M.</span>
-                  <i class="ri-verified-badge-fill verified-badge"></i>
+                  <span id="landlordName">Landlord</span>
+                  <i class="ri-verified-badge-fill verified-badge" id="landlordVerifiedIcon" style="display: none;"></i>
                 </h4>
-                <p>Verified Landlord</p>
+                <p id="landlordStatusText">Document Verification Pending</p>
               </div>
             </div>
 
@@ -397,7 +390,7 @@
                 <div class="unlock-price">$2.50</div>
                 <p class="unlock-text">One-time fee to unlock landlord contact details (no subscription)</p>
               </div>
-              <a href="payment/pay.html?listing=sample" id="unlockBtnLink" class="btn btn-primary btn-lg" style="width: 100%;">
+              <a href="/listings.html" id="unlockBtnLink" class="btn btn-primary btn-lg" style="width: 100%;">
                 <i class="ri-lock-unlock-line"></i> Unlock Contact ($2.50 Once)
               </a>
             </div>
@@ -433,6 +426,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </main>
@@ -474,6 +468,7 @@
     import { showToast } from '/core/utils/toast.js';
     import { hasConsent } from '/core/utils/consent.js';
     import { escapeHtml, safeImageUrl, sanitizePhone } from '/core/utils/sanitize.js';
+    import { renderNeighborhoodWidget } from '/core/neighborhoods/neighborhoods.js';
 
     let listingId = null;
     let listingImages = [];
@@ -481,11 +476,21 @@
     let selectedRating = 0;
     let isSaved = false;
 
+    function showNotFoundState() {
+      const mainWrap = document.getElementById('listingMainWrapper');
+      const notFound = document.getElementById('listingNotFound');
+      if (mainWrap) mainWrap.style.display = 'none';
+      if (notFound) notFound.style.display = 'block';
+    }
+
     async function init() {
       const params = new URLSearchParams(window.location.search);
       listingId = params.get('id');
 
-      if (!listingId || listingId === 'sample') return;
+      if (!listingId || listingId === 'sample') {
+        showNotFoundState();
+        return;
+      }
 
       document.getElementById('unlockBtnLink').href = `payment/pay.html?listing=${encodeURIComponent(listingId)}`;
       document.getElementById('reportListingLink').href = `report.html?listing=${encodeURIComponent(listingId)}`;
@@ -493,7 +498,8 @@
 
       const { data: listing, error } = await getSingleListing(listingId);
       if (error || !listing) {
-        showToast('Error', 'Property not found', 'error');
+        showNotFoundState();
+        showToast('Not Found', 'Property listing could not be found.', 'error');
         return;
       }
 
@@ -504,6 +510,9 @@
       document.getElementById('listingTitle').textContent = listing.title;
       document.getElementById('propertyTitle').textContent = listing.title;
       document.getElementById('propertyLocation').textContent = listing.location;
+      if (listing.created_at) {
+        document.getElementById('propertyDate').textContent = `Listed ${new Date(listing.created_at).toLocaleDateString()}`;
+      }
       document.getElementById('bedroomCount').textContent = listing.rooms;
       document.getElementById('bathroomCount').textContent = listing.bathrooms || 1;
       document.getElementById('propertySize').textContent = listing.size || 'N/A';
@@ -537,8 +546,24 @@
         .filter(Boolean);
       renderGallery();
 
+      const nbContainer = document.getElementById('neighborhoodContainer');
+      if (nbContainer) {
+        nbContainer.innerHTML = renderNeighborhoodWidget(listing.location);
+      }
+
       if (listing.users) {
         document.getElementById('landlordName').textContent = listing.users.name || 'Landlord';
+        const verifiedIcon = document.getElementById('landlordVerifiedIcon');
+        const statusText = document.getElementById('landlordStatusText');
+        if (listing.users.verified) {
+          if (verifiedIcon) verifiedIcon.style.display = 'inline-block';
+          if (statusText) statusText.textContent = listing.users.verification_tier
+            ? `Verified Landlord (${listing.users.verification_tier.toUpperCase()} Tier)`
+            : 'Document-Verified Landlord';
+        } else {
+          if (verifiedIcon) verifiedIcon.style.display = 'none';
+          if (statusText) statusText.textContent = 'Landlord Account';
+        }
       }
 
       const user = await getCurrentUser();
@@ -578,6 +603,7 @@
     function setupSaveButton() {
       const btn = document.getElementById('saveBtn');
       btn?.addEventListener('click', async () => {
+        if (!listingId) return;
         const user = await getCurrentUser();
         if (!user) {
           showToast('Login Required', 'Please sign in to save properties', 'warning');
@@ -641,6 +667,18 @@
       currentImageIndex = (currentImageIndex + 1) % listingImages.length;
       document.getElementById('galleryImage').src = listingImages[currentImageIndex];
     };
+
+    document.getElementById('galleryModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'galleryModal') window.closeGallery();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('galleryModal');
+      if (!modal?.classList.contains('active')) return;
+      if (e.key === 'Escape') window.closeGallery();
+      if (e.key === 'ArrowLeft') window.prevImage();
+      if (e.key === 'ArrowRight') window.nextImage();
+    });
 
     async function loadReviews() {
       const { data: reviews } = await getListingReviews(listingId);

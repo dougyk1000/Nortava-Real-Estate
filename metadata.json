@@ -1,0 +1,8 @@
+{
+  "name": "Nortava Real Estate",
+  "description": "Nationwide property rental and sales directory across all 10 provinces of Zimbabwe with AI property finder, document-verified landlords (Title Deeds & National ID), and local mobile money unlock support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

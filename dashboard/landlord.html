@@ -174,11 +174,77 @@
             </div>
             <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
               <div style="font-size: 2rem; font-weight: 700;" id="verificationStatus">
-                <span class="landlord-badge tier-bronze"><i class="ri-verified-badge-fill"></i> Bronze</span>
+                <span class="badge badge-warning">Pending</span>
               </div>
               <div style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Verification Tier</div>
             </div>
           </div>
+        </div>
+
+        <div class="card" id="verificationCard" style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0;"><i class="ri-shield-check-line" style="color: var(--primary);"></i> Title Deed &amp; Identity Verification</h2>
+              <p id="kycStatusDescription" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.35rem 0 0 0;">Checking verification status...</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" id="toggleKycUploadBtn">
+              <i class="ri-upload-cloud-line"></i> Upload / Update Documents
+            </button>
+          </div>
+          <div id="kycStatusBanner" style="margin-bottom: 1rem;"></div>
+
+          <form id="dashboardKycForm" style="display: none; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+              <div class="input-group">
+                <label for="dashNationalId">Zimbabwe National ID Number *</label>
+                <input type="text" id="dashNationalId" class="input" placeholder="e.g., 63-1234567A42" required>
+              </div>
+              <div class="input-group">
+                <label for="dashOwnershipCapacity">Ownership Capacity *</label>
+                <select id="dashOwnershipCapacity" class="input" required>
+                  <option value="owner">Property Owner (Title Deed Holder)</option>
+                  <option value="cession_holder">Cession / Council Stand Allocation Holder</option>
+                  <option value="authorized_representative">Authorized Family / Executor Representative</option>
+                  <option value="registered_agent">EACZ Registered Estate Agent</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="dashKycProvince">Province *</label>
+                <select id="dashKycProvince" class="input" required></select>
+              </div>
+              <div class="input-group">
+                <label for="dashKycCity">City / Town / District *</label>
+                <select id="dashKycCity" class="input" required></select>
+              </div>
+              <div class="input-group">
+                <label for="dashKycArea">Suburb / Area *</label>
+                <select id="dashKycArea" class="input" required></select>
+              </div>
+              <div class="input-group">
+                <label for="dashPropertyAddress">Stand / Street Address *</label>
+                <input type="text" id="dashPropertyAddress" class="input" placeholder="e.g., Stand 412, Knowe" required>
+              </div>
+              <div class="input-group">
+                <label for="dashTitleDeedFile">Title Deed / Cession / Offer Letter * (PDF/Image &le; 8MB)</label>
+                <input type="file" id="dashTitleDeedFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" required style="padding: 0.5rem;">
+              </div>
+              <div class="input-group">
+                <label for="dashNationalIdFile">Zimbabwe National ID Copy * (PDF/Image &le; 8MB)</label>
+                <input type="file" id="dashNationalIdFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" required style="padding: 0.5rem;">
+              </div>
+              <div class="input-group">
+                <label for="dashRatesBillFile">Council Rates / ZESA / Authority Proof (Optional)</label>
+                <input type="file" id="dashRatesBillFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" style="padding: 0.5rem;">
+              </div>
+            </div>
+            <label class="checkbox-group" style="margin: 1rem 0;">
+              <input type="checkbox" id="dashAntiFraudAttested" required>
+              <span style="font-size: 0.85rem;">I affirm under Zimbabwean law that all submitted ownership &amp; identity documents are authentic and accurate.</span>
+            </label>
+            <button type="submit" class="btn btn-primary">
+              <i class="ri-shield-check-line"></i> Submit Documents for AI &amp; Admin Verification
+            </button>
+          </form>
         </div>
 
         <div class="card" style="margin-bottom: 2rem;">

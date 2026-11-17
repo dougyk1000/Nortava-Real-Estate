@@ -42,10 +42,13 @@ export async function suppressEmail(email, supabaseClient = null) {
   localSuppressionSet.add(normalized);
 
   if (supabaseClient) {
-    await supabaseClient
-      .from('email_suppression')
-      .upsert({ email: normalized, suppressed_at: new Date().toISOString() }, { onConflict: 'email' })
-      .catch(() => {});
+    try {
+      await supabaseClient
+        .from('email_suppression')
+        .upsert({ email: normalized, suppressed_at: new Date().toISOString() }, { onConflict: 'email' });
+    } catch {
+      // Ignore storage persistence failures if table not yet migrated
+    }
   }
   return { ok: true, email: normalized };
 }

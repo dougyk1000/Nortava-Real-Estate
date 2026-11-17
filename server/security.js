@@ -113,6 +113,79 @@ export function isValidEmail(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().length <= 254;
 }
 
+function isLocalHostname(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  if (!host) return true;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
+    return true;
+  }
+  if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host)) {
+    return true;
+  }
+  if (!host.includes('.')) return true;
+  return false;
+}
+
+function parseHttpOrigin(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  try {
+    const parsed = new URL(rawUrl.trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+    return parsed.origin;
+  } catch {
+    return '';
+  }
+}
+
+export function resolvePublicAppOrigin(req) {
+  const candidates = [];
+
+  if (req && typeof req.get === 'function') {
+    const originHeader = parseHttpOrigin(req.get('origin'));
+    if (originHeader) candidates.push(originHeader);
+
+    const refererOrigin = parseHttpOrigin(req.get('referer'));
+    if (refererOrigin) candidates.push(refererOrigin);
+
+    const forwardedHostRaw = req.get('x-forwarded-host');
+    const forwardedProtoRaw = req.get('x-forwarded-proto');
+    if (forwardedHostRaw) {
+      const fHost = String(forwardedHostRaw).split(',')[0].trim();
+      const fProto = String(forwardedProtoRaw || 'https').split(',')[0].trim().toLowerCase() === 'http' ? 'http' : 'https';
+      const fOrigin = parseHttpOrigin(`${fProto}://${fHost}`);
+      if (fOrigin) candidates.push(fOrigin);
+    }
+
+    const hostHeader = req.get('host');
+    if (hostHeader) {
+      const proto = String(forwardedProtoRaw || req.protocol || 'http').split(',')[0].trim().toLowerCase() === 'https' ? 'https' : 'http';
+      const hostOrigin = parseHttpOrigin(`${proto}://${hostHeader}`);
+      if (hostOrigin) candidates.push(hostOrigin);
+    }
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = new URL(candidate);
+      if (!isLocalHostname(parsed.hostname)) {
+        return parsed.origin;
+      }
+    } catch {
+      // Ignore invalid URL
+    }
+  }
+
+  const envOrigin =
+    parseHttpOrigin(process.env.PUBLIC_APP_URL) ||
+    parseHttpOrigin(process.env.SITE_URL) ||
+    parseHttpOrigin(process.env.APP_URL);
+  if (envOrigin) {
+    return envOrigin;
+  }
+
+  return candidates[0] || '';
+}
+
 export function securityHeadersMiddleware(req, res, next) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

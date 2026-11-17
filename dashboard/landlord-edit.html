@@ -98,8 +98,24 @@
             </div>
 
             <div class="input-group">
-              <label for="location">Location in Norton</label>
-              <input type="text" id="location" class="input" required>
+              <label for="province">Province</label>
+              <select id="province" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="city">City / Town / District</label>
+              <select id="city" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="area">Suburb / Area</label>
+              <select id="area" class="input" required></select>
+            </div>
+
+            <div class="input-group">
+              <label for="locationDetail">Street / Phase / Custom Area (Optional)</label>
+              <input type="text" id="locationDetail" class="input" placeholder="Optional street, phase, or stand">
+              <small id="locationPreview" style="color: var(--text-tertiary); font-size: 0.78rem;"></small>
             </div>
 
             <div class="input-group" style="grid-column: span 2;">
@@ -127,7 +143,18 @@
     import { getListingById, updateListing, deleteListing, getCurrentUser } from '/core/api/api.js';
     import { showToast } from '/core/utils/toast.js';
     import { logout } from '/core/auth/auth.js';
+    import { initListingLocationPicker } from '/core/locations/locationSelector.js';
     window.logout = logout;
+
+    const locationPicker = initListingLocationPicker({
+      provinceEl: document.getElementById('province'),
+      cityEl: document.getElementById('city'),
+      areaEl: document.getElementById('area'),
+      detailEl: document.getElementById('locationDetail'),
+      previewEl: document.getElementById('locationPreview'),
+      defaultProvince: 'Mashonaland West',
+      defaultCity: 'Norton'
+    });
 
     const params = new URLSearchParams(window.location.search);
     const listingId = params.get('id');
@@ -167,7 +194,7 @@
       document.getElementById('rooms').value = listing.rooms;
       document.getElementById('bathrooms').value = listing.bathrooms || 1;
       document.getElementById('size').value = listing.size || '';
-      document.getElementById('location').value = listing.location;
+      locationPicker.setLocationFromString(listing.location || '');
       document.getElementById('description').value = listing.description;
     }
 
@@ -185,7 +212,7 @@
         rooms: parseInt(document.getElementById('rooms').value, 10),
         bathrooms: parseInt(document.getElementById('bathrooms').value, 10),
         size: document.getElementById('size').value || null,
-        location: document.getElementById('location').value.trim(),
+        location: locationPicker.getLocationString(),
         description: document.getElementById('description').value.trim()
       };
 

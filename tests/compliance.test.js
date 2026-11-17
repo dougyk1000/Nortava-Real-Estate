@@ -13,7 +13,29 @@ import {
   validateMarketingSend
 } from '../server/emailCompliance.js';
 import { createApp } from '../server.js';
+import { resolvePublicAppOrigin } from '../server/security.js';
 import { escapeHtml, safeUrl, safeImageUrl, sanitizePhone } from '../core/utils/sanitize.js';
+import { calculateRecommendedPrice } from '../core/pricing/pricing.js';
+import { getNeighborhoodInfo } from '../core/neighborhoods/neighborhoods.js';
+import {
+  ZIMBABWE_LOCATIONS,
+  getProvinces,
+  getCitiesByProvince,
+  getZonesByCity,
+  getAreas,
+  parseLocationString,
+  matchesLocationFilter,
+  formatLocationLabel
+} from '../core/locations/zimbabweLocations.js';
+import {
+  validateZimbabweNationalId,
+  validateDocumentUpload,
+  MAX_KYC_DOC_BYTES
+} from '../server/landlordVerification.js';
+import {
+  filterListingsByConditions,
+  buildListingsFilterUrl
+} from '../server/aiAssistant.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -290,9 +312,14 @@ test('HTTP Server Security, COPPA Endpoints, Fail-Closed Auth/Payments & Unsubsc
     for (const [method, endpoint] of [
       ['GET', '/api/admin/session'],
       ['GET', '/api/admin/overview'],
+      ['GET', '/api/admin/landlord-doc?path=test.png'],
       ['POST', '/api/admin/verify-landlord'],
+      ['POST', '/api/admin/reject-landlord'],
+      ['POST', '/api/admin/ai-verify-landlord'],
       ['POST', '/api/admin/approve-listing'],
       ['DELETE', '/api/admin/listings/abc'],
+      ['GET', '/api/landlord/verification-status'],
+      ['POST', '/api/landlord/verification'],
       ['POST', '/api/payments/create'],
       ['POST', '/api/payments/verify']
     ]) {
@@ -304,7 +331,53 @@ test('HTTP Server Security, COPPA Endpoints, Fail-Closed Auth/Payments & Unsubsc
       assert.equal(r.status, 401, `${method} ${endpoint} should require authentication`);
     }
 
-    // 7. Unsubscribe endpoint validates HMAC token
+    // 7. Resend confirmation and password reset reject malformed emails with 400
+    const badResend = await fetch(`${baseUrl}/api/auth/resend-confirmation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'not-an-email' })
+    });
+    assert.equal(badResend.status, 400);
+
+    const badReset = await fetch(`${baseUrl}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'bad-email' })
+    });
+    assert.equal(badReset.status, 400);
+
+    // 7b. Public origin resolver ignores localhost and uses public forwarded host or APP_URL
+    const fakeLocalReq = {
+      protocol: 'http',
+      get(h) {
+        const key = h.toLowerCase();
+        if (key === 'host') return 'localhost:3000';
+        if (key === 'origin') return 'http://localhost:3000';
+        return '';
+      }
+    };
+    const prevAppUrl = process.env.APP_URL;
+    process.env.APP_URL = 'https://nortava-public.example.com';
+    try {
+      assert.equal(resolvePublicAppOrigin(fakeLocalReq), 'https://nortava-public.example.com');
+    } finally {
+      if (prevAppUrl === undefined) delete process.env.APP_URL;
+      else process.env.APP_URL = prevAppUrl;
+    }
+
+    const fakeForwardedReq = {
+      protocol: 'http',
+      get(h) {
+        const key = h.toLowerCase();
+        if (key === 'host') return 'localhost:3000';
+        if (key === 'x-forwarded-host') return 'nortava.co.zw';
+        if (key === 'x-forwarded-proto') return 'https';
+        return '';
+      }
+    };
+    assert.equal(resolvePublicAppOrigin(fakeForwardedReq), 'https://nortava.co.zw');
+
+    // 8. Unsubscribe endpoint validates HMAC token
     const badUnsub = await fetch(`${baseUrl}/api/email/unsubscribe?email=user@example.com&token=invalid`);
     assert.equal(badUnsub.status, 403);
 
@@ -339,7 +412,8 @@ test('Repository Static Security & Font Self-Hosting Audit', () => {
     { name: 'fonts.googleapis.com', regex: /fonts\.googleapis\.com/i },
     { name: 'fonts.gstatic.com', regex: /fonts\.gstatic\.com/i },
     { name: 'hardcoded password', regex: /Br@@115/ },
-    { name: 'hardcoded admin email', regex: /douglasnkowo3036@gmail\.com/i }
+    { name: 'hardcoded admin email', regex: /douglasnkowo3036@gmail\.com/i },
+    { name: 'sample listing link', regex: /\?id=sample|listing=sample|Sample Property|\(Sample\)/i }
   ];
 
   const ignoredDirs = new Set(['node_modules', 'dist', '.git', 'tests']);
@@ -367,3 +441,320 @@ test('Repository Static Security & Font Self-Hosting Audit', () => {
 
   walk(ROOT);
 });
+
+test('AI Property Assistant API (/api/chat): validates input and surfaces real GEMINI_API_KEY state without fake fallbacks', async () => {
+  const { server, baseUrl } = await startTestServer();
+  const prevKey = process.env.GEMINI_API_KEY;
+  try {
+    // Reject empty messages cleanly
+    const emptyRes = await fetch(`${baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '   ' })
+    });
+    assert.equal(emptyRes.status, 400);
+
+    // Without GEMINI_API_KEY, endpoint must fail honestly with 503 GEMINI_API_KEY_MISSING (no canned masking)
+    delete process.env.GEMINI_API_KEY;
+    const unconfiguredRes = await fetch(`${baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'What houses are available in Katanga?' })
+    });
+    assert.equal(unconfiguredRes.status, 503);
+    const unconfiguredBody = await unconfiguredRes.json();
+    assert.equal(unconfiguredBody.code, 'GEMINI_API_KEY_MISSING');
+
+    // Public config reflects aiConfigured accurately without exposing any secret value
+    const cfgRes = await fetch(`${baseUrl}/api/public-config`);
+    const cfg = await cfgRes.json();
+    assert.equal(cfg.aiConfigured, false);
+    assert.equal('geminiApiKey' in cfg, false);
+  } finally {
+    if (prevKey !== undefined) process.env.GEMINI_API_KEY = prevKey;
+    else delete process.env.GEMINI_API_KEY;
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('Norton Suburb Pricing, Neighborhood Intelligence & Zimbabwe Statutory Compliance Disclosures', () => {
+  // Verify Norton suburb pricing calibration
+  const katangaRent = calculateRecommendedPrice({ location: 'Katanga, Norton', rooms: 2, type: 'rent', water: true });
+  const knoweRent = calculateRecommendedPrice({ location: 'Knowe, Norton', rooms: 3, type: 'rent', water: true, electricity: true });
+  assert.ok(katangaRent.recommended > 0 && knoweRent.recommended > katangaRent.recommended);
+
+  // Verify real Norton suburbs and nationwide Zimbabwe regional hierarchy in neighborhood intelligence
+  assert.equal(getNeighborhoodInfo('Katanga, Norton')?.name, 'Katanga');
+  assert.equal(getNeighborhoodInfo('Twin Lakes, Norton')?.name, 'Twin Lakes');
+  assert.equal(getNeighborhoodInfo('Borrowdale, Harare')?.province, 'Harare');
+
+  // Verify Zimbabwe statutory notices are present across legal & safety docs
+  const privacy = fs.readFileSync(path.join(ROOT, 'legal/privacy.html'), 'utf8');
+  assert.match(privacy, /Cyber and Data Protection Act \[Chapter 12:07\]/);
+  assert.match(privacy, /SI 155 of 2024|Statutory Instrument 155 of 2024/);
+  assert.match(privacy, /POTRAZ/);
+
+  const terms = fs.readFileSync(path.join(ROOT, 'legal/terms.html'), 'utf8');
+  assert.match(terms, /Estate Agents Act \[Chapter 27:17\]/);
+  assert.match(terms, /Consumer Protection Act \[Chapter 14:14\]/);
+  assert.match(terms, /National Payment Systems Act \[Chapter 24:23\]/);
+  assert.match(terms, /Republic of Zimbabwe/);
+
+  const dmca = fs.readFileSync(path.join(ROOT, 'legal/dmca.html'), 'utf8');
+  assert.match(dmca, /Copyright and Neighbouring Rights Act \[Chapter 26:05\]/);
+
+  const safety = fs.readFileSync(path.join(ROOT, 'safety.html'), 'utf8');
+  assert.match(safety, /Estate Agents Council of Zimbabwe/);
+  assert.match(safety, /Zimbabwe Rent Board/);
+});
+
+test('Zimbabwe Hierarchical Locations: covers all 10 provinces, cities/districts, zones, and suburbs with legacy compatibility', () => {
+  const provinces = getProvinces();
+  assert.equal(provinces.length, 10);
+  for (const expectedProv of [
+    'Harare',
+    'Bulawayo',
+    'Mashonaland West',
+    'Mashonaland East',
+    'Mashonaland Central',
+    'Manicaland',
+    'Midlands',
+    'Masvingo',
+    'Matabeleland North',
+    'Matabeleland South'
+  ]) {
+    assert.ok(provinces.includes(expectedProv), `Missing province: ${expectedProv}`);
+  }
+
+  // Mashonaland West -> Norton -> Zones -> Knowe / Galloway / Katanga
+  const mashWestCities = getCitiesByProvince('Mashonaland West').map(c => c.city);
+  assert.ok(mashWestCities.includes('Norton'));
+  assert.ok(mashWestCities.includes('Chinhoyi'));
+  assert.ok(mashWestCities.includes('Kadoma'));
+  assert.ok(mashWestCities.includes('Kariba'));
+
+  const nortonZones = getZonesByCity('Norton', 'Mashonaland West');
+  assert.ok(nortonZones.length >= 3);
+  const nortonAreas = getAreas({ province: 'Mashonaland West', city: 'Norton' }).map(a => a.area);
+  assert.ok(nortonAreas.includes('Knowe'));
+  assert.ok(nortonAreas.includes('Galloway'));
+  assert.ok(nortonAreas.includes('Katanga'));
+  assert.ok(nortonAreas.includes('Twin Lakes'));
+
+  // Parsing legacy string without province still resolves Mashonaland West > Norton > Katanga
+  const legacyParsed = parseLocationString('Katanga, Norton');
+  assert.equal(legacyParsed.province, 'Mashonaland West');
+  assert.equal(legacyParsed.city, 'Norton');
+  assert.equal(legacyParsed.area, 'Katanga');
+
+  // Filtering by Province / City / Zone matches legacy listings accurately
+  assert.equal(matchesLocationFilter('Katanga, Norton', { province: 'Mashonaland West' }), true);
+  assert.equal(matchesLocationFilter('Katanga, Norton', { province: 'Mashonaland West', city: 'Norton' }), true);
+  assert.equal(matchesLocationFilter('Katanga, Norton', { province: 'Mashonaland West', city: 'Norton', zone: 'High Density & Estates' }), true);
+  assert.equal(matchesLocationFilter('Katanga, Norton', { province: 'Mashonaland West', city: 'Norton', zone: 'Low Density & Waterfront' }), false);
+  assert.equal(matchesLocationFilter('Knowe, Norton, Mashonaland West', { province: 'Mashonaland West', city: 'Norton', area: 'Knowe' }), true);
+  assert.equal(matchesLocationFilter('Borrowdale, Harare, Harare', { province: 'Harare', city: 'Harare', area: 'Borrowdale' }), true);
+  assert.equal(matchesLocationFilter('Seke Unit C, Chitungwiza, Harare', { province: 'Harare', city: 'Chitungwiza' }), true);
+  assert.equal(matchesLocationFilter('Cowdray Park, Bulawayo, Bulawayo', { province: 'Bulawayo', city: 'Bulawayo', area: 'Cowdray Park' }), true);
+
+  assert.equal(
+    formatLocationLabel({ area: 'Galloway', city: 'Norton', province: 'Mashonaland West' }),
+    'Galloway, Norton, Mashonaland West'
+  );
+  assert.ok(ZIMBABWE_LOCATIONS.every(p => p.cities.length >= 1));
+});
+
+test('Anti-Scam Landlord KYC: validates Zimbabwe National IDs, magic-byte file verification, and rejects incomplete landlord registration', async () => {
+  // Valid Zimbabwe National ID formats
+  const validId = validateZimbabweNationalId('63-1234567 a 42');
+  assert.equal(validId.valid, true);
+  assert.equal(validId.normalized, '63-1234567A42');
+
+  const badId = validateZimbabweNationalId('12345');
+  assert.equal(badId.valid, false);
+
+  // Genuine PNG magic-byte document vs spoofed HTML disguised as image/png
+  const pngBytes = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.from('IHDR-NORTAVA-DEED-TEST-CONTENT')
+  ]);
+  const validPng = validateDocumentUpload({
+    fileName: 'title-deed.png',
+    mimeType: 'image/png',
+    dataBase64: `data:image/png;base64,${pngBytes.toString('base64')}`
+  }, 'Title Deed');
+  assert.equal(validPng.valid, true);
+  assert.equal(validPng.mimeType, 'image/png');
+  assert.match(validPng.sha256, /^[a-f0-9]{64}$/);
+
+  const pdfBytes = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n');
+  const validPdf = validateDocumentUpload({
+    fileName: 'deed.pdf',
+    mimeType: 'application/pdf',
+    dataBase64: pdfBytes.toString('base64')
+  }, 'Title Deed');
+  assert.equal(validPdf.valid, true);
+  assert.equal(validPdf.mimeType, 'application/pdf');
+
+  const spoofedHtml = validateDocumentUpload({
+    fileName: 'fake-deed.png',
+    mimeType: 'image/png',
+    dataBase64: `data:image/png;base64,${Buffer.from('<html><script>alert(1)</script></html>').toString('base64')}`
+  }, 'Title Deed');
+  assert.equal(spoofedHtml.valid, false);
+
+  const oversizedBuf = Buffer.alloc(MAX_KYC_DOC_BYTES + 1024, 0x41);
+  const tooBig = validateDocumentUpload({
+    fileName: 'huge.pdf',
+    mimeType: 'application/pdf',
+    dataBase64: oversizedBuf.toString('base64')
+  }, 'Title Deed');
+  assert.equal(tooBig.valid, false);
+
+  // Server-side landlord registration rejects unattested or missing Title Deed / ID with 400
+  const { server, baseUrl } = await startTestServer();
+  try {
+    const unattested = await fetch(`${baseUrl}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'scam.landlord@example.com',
+        password: 'Password123!',
+        name: 'Unverified Seller',
+        role: 'landlord',
+        phone: '+263771234567',
+        birthYear: 1985,
+        birthMonth: 4,
+        termsAccepted: true,
+        landlordKyc: {
+          nationalIdNumber: '63-1234567A42',
+          ownershipCapacity: 'owner',
+          propertyProvince: 'Harare',
+          propertyCity: 'Harare',
+          propertyArea: 'Borrowdale',
+          propertyAddress: 'Stand 44 Borrowdale',
+          antiFraudAttested: false
+        }
+      })
+    });
+    assert.equal(unattested.status, 400);
+
+    const incompleteLandlord = await fetch(`${baseUrl}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'scam.landlord@example.com',
+        password: 'Password123!',
+        name: 'Unverified Seller',
+        role: 'landlord',
+        phone: '+263771234567',
+        birthYear: 1985,
+        birthMonth: 4,
+        termsAccepted: true,
+        landlordKyc: {
+          nationalIdNumber: '63-1234567A42',
+          ownershipCapacity: 'owner',
+          propertyProvince: 'Harare',
+          propertyCity: 'Harare',
+          propertyArea: 'Borrowdale',
+          propertyAddress: 'Stand 44 Borrowdale',
+          antiFraudAttested: true
+          // missing titleDeedDoc & nationalIdDoc
+        }
+      })
+    });
+    assert.equal(incompleteLandlord.status, 400);
+    const incompleteBody = await incompleteLandlord.json();
+    assert.match(incompleteBody.error, /Title Deed|required/i);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('Tariro AI Property Finder: filters live Zimbabwe listings by province/city/suburb & conditions and generates filter URLs', () => {
+  const sampleListings = [
+    {
+      id: 'l-knowe-1',
+      title: '3 Bed House with Borehole in Knowe',
+      type: 'rent',
+      price: 380,
+      rooms: 3,
+      bathrooms: 2,
+      location: 'Knowe, Norton, Mashonaland West',
+      furnished: false,
+      water: true,
+      electricity: true,
+      parking: true
+    },
+    {
+      id: 'l-borrowdale-1',
+      title: 'Furnished Cottage in Borrowdale',
+      type: 'rent',
+      price: 750,
+      rooms: 2,
+      bathrooms: 2,
+      location: 'Borrowdale, Harare, Harare',
+      furnished: true,
+      water: true,
+      electricity: true,
+      parking: true
+    },
+    {
+      id: 'l-katanga-1',
+      title: '2 Bed Starter Home in Katanga',
+      type: 'rent',
+      price: 160,
+      rooms: 2,
+      bathrooms: 1,
+      location: 'Katanga, Norton, Mashonaland West',
+      furnished: false,
+      water: true,
+      electricity: false,
+      parking: false
+    }
+  ];
+
+  // Condition + area match: Norton, max $400, 3+ rooms, water + electricity + parking
+  const nortonMatches = filterListingsByConditions(sampleListings, {
+    city: 'Norton',
+    type: 'rent',
+    maxPrice: 400,
+    minRooms: 3,
+    water: true,
+    electricity: true,
+    parking: true
+  });
+  assert.equal(nortonMatches.length, 1);
+  assert.equal(nortonMatches[0].id, 'l-knowe-1');
+
+  // Suburb match: Borrowdale furnished
+  const harareMatches = filterListingsByConditions(sampleListings, {
+    area: 'Borrowdale',
+    furnished: true
+  });
+  assert.equal(harareMatches.length, 1);
+  assert.equal(harareMatches[0].id, 'l-borrowdale-1');
+
+  // Non-matching province returns 0 cleanly
+  const bulawayoMatches = filterListingsByConditions(sampleListings, {
+    province: 'Bulawayo',
+    city: 'Bulawayo'
+  });
+  assert.equal(bulawayoMatches.length, 0);
+
+  // Filter URL builder
+  const filterUrl = buildListingsFilterUrl({
+    province: 'Mashonaland West',
+    city: 'Norton',
+    area: 'Knowe',
+    type: 'rent',
+    maxPrice: 400,
+    minRooms: 3
+  });
+  assert.equal(
+    filterUrl,
+    '/listings.html?province=Mashonaland+West&city=Norton&area=Knowe&type=rent&max_price=400&rooms=3'
+  );
+});
+
+

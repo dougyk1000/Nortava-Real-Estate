@@ -39,46 +39,60 @@
       <div class="container" style="max-width: 800px;">
         <div style="color: var(--text-secondary); line-height: 1.8;">
           <div class="owner-action-note" style="margin-bottom: 2rem;">
-            <strong>Operator Identity Notice [OWNER CONFIRMATION REQUIRED]:</strong> Before public launch, insert the full legal entity name, business registration details, and physical postal mailing address of the Nortava operator. Support email: nortava@gmail.com | Location: Norton, Zimbabwe.
+            <strong>Operator &amp; Data Controller Notice [OWNER CONFIRMATION REQUIRED]:</strong> Before public launch, insert the full legal entity name, Zimbabwe business registration details, physical postal mailing address, and POTRAZ-registered Data Protection Officer (DPO) contact details pursuant to the Cyber and Data Protection Act [Chapter 12:07] and SI 155 of 2024. Support email: nortava@gmail.com | Location: Norton, Zimbabwe.
           </div>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">1. Information We Collect</h2>
-          <p style="margin-bottom: 1rem;">We collect only the information needed to operate the property platform:</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">1. Regulatory Framework &amp; Lawful Basis</h2>
+          <p style="margin-bottom: 2rem;">
+            Nortava processes personal information in accordance with Zimbabwe's <strong>Cyber and Data Protection Act [Chapter 12:07]</strong> and <strong>Statutory Instrument 155 of 2024</strong> (Data Protection Regulations enforced by POTRAZ). We process personal data only where necessary to perform our directory service contract with you, comply with statutory obligations, prevent fraud, or where you have given explicit opt-in consent (such as optional theme preferences or aggregated view counts).
+          </p>
+
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">2. Information We Collect</h2>
+          <p style="margin-bottom: 1rem;">Following data-minimization principles, we collect only the information needed to operate the property platform:</p>
           <ul style="margin-bottom: 2rem; margin-left: 1.5rem;">
             <li><strong>Account &amp; Profile Data:</strong> Full name, email address, phone number, role (tenant or landlord), and age-eligibility confirmation (birth month and year checked during signup; we do not store full dates of birth unnecessarily).</li>
-            <li><strong>Listing &amp; Review Content:</strong> Property descriptions, pricing, neighborhood details, uploaded property photographs, and reviews submitted by signed-in users.</li>
-            <li><strong>Support, Abuse &amp; Copyright Notices:</strong> Messages submitted via our contact, report, or DMCA forms, including age confirmation (birth month/year) for guest submissions.</li>
-            <li><strong>Payment &amp; Unlock Records:</strong> Transaction reference, selected payment method, amount ($2.50), and unlock status.</li>
+            <li><strong>Landlord Anti-Fraud Verification Records (Landlords Only):</strong> Zimbabwe National ID number, ownership capacity, property location/stand address, and uploaded ownership/identity documents (Title Deed / Cession Agreement / Offer Letter, National ID copy, and optional supporting bills). These files are stored strictly in a private, encrypted non-public storage bucket accessible only to authorized platform administrators and server-side anti-fraud checks—never displayed publicly.</li>
+            <li><strong>Listing &amp; Review Content:</strong> Property descriptions, pricing, province/city/suburb details, uploaded property photographs, and reviews submitted by signed-in users.</li>
+            <li><strong>Support, Abuse &amp; Copyright Notices:</strong> Messages submitted via our contact, report, or copyright takedown forms, including age confirmation (birth month/year) for guest submissions.</li>
+            <li><strong>Payment &amp; Unlock Records:</strong> Transaction reference, selected payment method, amount ($2.50 USD), and unlock status.</li>
             <li><strong>Optional Analytics (Opt-In Only):</strong> Aggregated listing view counts only when you explicitly consent to optional analytics. We do not use session replay, heatmaps, keystroke logging, or third-party ad trackers.</li>
           </ul>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">2. Children's Privacy (COPPA &amp; Age Restrictions)</h2>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">3. Children's Privacy &amp; Age Restrictions</h2>
           <p style="margin-bottom: 2rem;">
-            Nortava is not directed to children under 13, and we strictly prohibit anyone under 13 from creating an account or submitting personal information through any form (registration, contact, listing reports, or DMCA notices). Our server verifies birth month and year prior to processing or storing personal information; rejected under-age attempts are blocked without persisting personal information. In addition, account creation requires users to be at least 18 years old under our Terms of Service.
+            Nortava is not directed to minors. Anyone under 13 is strictly prohibited from submitting personal information through any form (registration, contact, listing reports, or copyright notices) under COPPA, and pursuant to Zimbabwe's <strong>Legal Age of Majority Act [Chapter 8:07]</strong> and <strong>Cyber and Data Protection Act [Chapter 12:07]</strong> (which requires verifiable parental/guardian consent for children under 18), Nortava restricts account creation strictly to persons aged <strong>18 years and older</strong>. Our server verifies birth month and year prior to processing or storing personal information; rejected under-age attempts are blocked without persisting personal data.
           </p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">3. Third-Party Processors &amp; Infrastructure</h2>
-          <p style="margin-bottom: 1rem;">We self-host all fonts and icons locally and do not load third-party font CDNs or analytics SDKs. When enabled and configured by the platform operator, data is processed by:</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">4. Third-Party Processors &amp; Cross-Border Transfers</h2>
+          <p style="margin-bottom: 1rem;">We self-host all fonts and icons locally and do not load third-party font CDNs or analytics SDKs. In accordance with Section 28 of the Cyber and Data Protection Act [Chapter 12:07], when enabled and configured by the platform operator, personal data may be processed on secure cloud infrastructure located outside Zimbabwe with contractual and technical safeguards:</p>
           <ul style="margin-bottom: 2rem; margin-left: 1.5rem;">
             <li><strong>Supabase Inc.:</strong> Authentication, PostgreSQL database hosting, and property image storage.</li>
-            <li><strong>Local Payment Providers (EcoCash, OneMoney, Mukuru, InnBucks):</strong> Used solely to process tenant contact-unlock payments ($2.50 one-time fee) once merchant integrations are configured.</li>
+            <li><strong>RBZ-Authorized Payment Channels (EcoCash, OneMoney, Mukuru, InnBucks):</strong> Used solely to process tenant contact-unlock payments ($2.50 USD one-time fee) once merchant integrations are configured.</li>
+            <li><strong>AI Property Assistant (Server-Side):</strong> When you chat with Tariro, your message text and selected conversation context are sent server-side to generate a response. Please do not share sensitive financial credentials, National ID numbers, or passwords inside chat messages.</li>
             <li><strong>Application Hosting Provider:</strong> Receives standard HTTPS network metadata (such as IP address and request path) necessary to deliver web pages and API responses securely.</li>
           </ul>
-          <p style="margin-bottom: 2rem;">We share landlord contact details (name, phone, email) with a tenant only after a verified contact unlock for that listing. We never sell your personal information.</p>
+          <p style="margin-bottom: 2rem;">We share landlord contact details (name, phone, email) with a tenant only after a verified contact unlock for that listing. We never sell or rent your personal information.</p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">4. Email Communications &amp; Unsubscribe</h2>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">5. Email Communications &amp; Unsubscribe</h2>
           <p style="margin-bottom: 2rem;">
             Nortava does not currently send promotional or marketing email campaigns. Essential transactional communications (such as email verification or password resets) are sent strictly as needed for account security. If optional marketing emails are ever introduced in the future, they will require explicit opt-in consent and include a one-click unsubscribe mechanism.
           </p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">5. Your Rights &amp; Consent Controls</h2>
-          <p style="margin-bottom: 1rem;">You have the right to access, correct, or request deletion of your personal information, as well as withdraw consent for non-essential browser storage or analytics at any time using Cookie Settings in the footer or on our <a href="/legal/cookies.html" style="color: var(--primary);">Cookie Policy</a> page.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">6. Your Rights Under Zimbabwean Law (POTRAZ)</h2>
+          <p style="margin-bottom: 1rem;">Under the Cyber and Data Protection Act [Chapter 12:07], you have the right to:</p>
+          <ul style="margin-bottom: 1.5rem; margin-left: 1.5rem;">
+            <li>Request confirmation of whether we hold your personal data and obtain a copy of that data.</li>
+            <li>Request correction of inaccurate, incomplete, or outdated personal information.</li>
+            <li>Request deletion or blocking of personal data no longer necessary for lawful purposes.</li>
+            <li>Object to processing or withdraw consent for non-essential browser storage or analytics at any time via Cookie Settings in the footer or on our <a href="/legal/cookies.html" style="color: var(--primary);">Cookie Policy</a> page.</li>
+            <li>Lodge a complaint with the <strong>Postal and Telecommunications Regulatory Authority of Zimbabwe (POTRAZ)</strong> if you believe your data protection rights have been infringed.</li>
+          </ul>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">6. Data Retention &amp; Security</h2>
-          <p style="margin-bottom: 2rem;">We retain account and listing records while your account remains active and enforce Row-Level Security (RLS) policies, HTTPS transport security, and input sanitization. Upon verified deletion requests, personal data is removed within 30 days unless retention is required by law or payment recordkeeping obligations.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">7. Data Retention, Security &amp; Breach Notification</h2>
+          <p style="margin-bottom: 2rem;">We retain account and listing records while your account remains active and enforce Row-Level Security (RLS) policies, HTTPS transport security, and input sanitization. Upon verified deletion requests, personal data is removed within 30 days unless retention is required by Zimbabwean tax, anti-fraud, or payment recordkeeping law. In the event of a personal data breach likely to cause risk to users, Nortava notifies POTRAZ within <strong>72 hours</strong> and affected data subjects promptly in compliance with Section 19 of the Cyber and Data Protection Act [Chapter 12:07] and SI 155 of 2024.</p>
 
-          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">7. Contact Us</h2>
-          <p>For privacy requests, data deletion, or questions, please <a href="/contact.html" style="color: var(--primary);">contact us</a> or review our <a href="/legal/dmca.html" style="color: var(--primary);">DMCA Policy</a>.</p>
+          <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">8. Data Protection Contact</h2>
+          <p>For privacy requests, data deletion, DPO inquiries, or copyright notices, please <a href="/contact.html" style="color: var(--primary);">contact us</a> or review our <a href="/legal/dmca.html" style="color: var(--primary);">Copyright &amp; Takedown Policy</a>.</p>
         </div>
       </div>
     </section>

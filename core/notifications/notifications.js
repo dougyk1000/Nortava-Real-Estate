@@ -84,7 +84,7 @@ export function renderNotificationItem(notification) {
   const timeAgo = getTimeAgo(new Date(notification.timestamp));
 
   return `
-    <div class="notification-item ${notification.read ? '' : 'unread'}" onclick="markNotificationRead('${escapeHtml(notification.id)}')">
+    <div class="notification-item ${notification.read ? '' : 'unread'}" data-notif-id="${escapeHtml(notification.id)}">
       <div class="notification-icon">
         <i class="${icons[notification.type] || 'ri-notification-line'}"></i>
       </div>
@@ -126,7 +126,7 @@ export function setupSmartNotifications() {
 }
 
 export function initNotificationCenter() {
-  const bell = document.querySelector('.notification-bell');
+  const bell = document.getElementById('notifBtn') || document.querySelector('.notification-bell');
   if (!bell) return;
 
   bell.addEventListener('click', async (e) => {
@@ -152,7 +152,7 @@ function showNotificationPanel(list, unreadCount) {
   panel.innerHTML = `
     <div class="notification-header">
       <h3>Notifications <span class="badge" style="background: var(--primary);">${escapeHtml(unreadCount)}</span></h3>
-      <button type="button" onclick="closeNotifications()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+      <button type="button" id="closeNotifPanelBtn" aria-label="Close notifications" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
         <i class="ri-close-line"></i>
       </button>
     </div>
@@ -163,6 +163,13 @@ function showNotificationPanel(list, unreadCount) {
       }
     </div>
   `;
+
+  panel.querySelector('#closeNotifPanelBtn')?.addEventListener('click', window.closeNotifications);
+  panel.querySelectorAll('.notification-item[data-notif-id]').forEach(item => {
+    item.addEventListener('click', () => {
+      window.markNotificationRead(item.dataset.notifId);
+    });
+  });
 
   panel.style.display = 'block';
 }

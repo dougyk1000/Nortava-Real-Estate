@@ -3,30 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Create a Nortava account - Join as a tenant to find properties or as a landlord to list your properties in Norton, Zimbabwe.">
-  <meta name="keywords" content="register, sign up, create account, real estate, landlord, tenant, Nortava">
+  <meta name="description" content="Create a Nortava account - Join as a tenant to find properties or register as a verified landlord with Title Deed & National ID verification anywhere in Zimbabwe.">
+  <meta name="keywords" content="register, sign up, create account, Zimbabwe real estate, landlord verification, title deeds, tenant, Nortava">
   <meta name="author" content="Douglas Kowo">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Register - Nortava">
-  <meta property="og:description" content="Create a free account on Nortava and start renting or listing properties.">
+  <meta property="og:description" content="Create an account on Nortava and find or list verified properties across all 10 Provinces of Zimbabwe.">
   <meta property="og:image" content="/assets/images/logo/nortava-logo.jpg">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Register - Nortava">
-  <meta name="twitter:description" content="Join Nortava today and find your perfect property">
+  <meta name="twitter:description" content="Join Nortava today and find or list verified properties across Zimbabwe">
   <link rel="icon" type="image/jpeg" href="/assets/images/logo/nortava-logo.jpg">
   <link rel="apple-touch-icon" href="/assets/images/logo/nortava-logo.jpg">
   <title>Register - Nortava</title>
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-card">
+  <div class="auth-container" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="auth-card" style="max-width: 620px;">
       <div class="auth-header">
         <a href="/" class="logo">
           <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava" style="height: 48px;">
         </a>
         <h1>Create Account</h1>
-        <p>Join Nortava today</p>
+        <p>Join Nortava across all 10 Provinces of Zimbabwe</p>
       </div>
 
       <form class="auth-form" id="registerForm">
@@ -47,10 +47,10 @@
         </div>
 
         <div class="input-group">
-          <label for="name">Full Name</label>
+          <label for="name">Full Legal Name</label>
           <div class="input-icon">
             <i class="ri-user-3-line"></i>
-            <input type="text" id="name" class="input" placeholder="Your full name" required>
+            <input type="text" id="name" class="input" placeholder="Full name as on National ID" required>
           </div>
         </div>
 
@@ -63,7 +63,7 @@
         </div>
 
         <div class="input-group">
-          <label for="phone">Phone Number</label>
+          <label for="phone">Phone Number <span id="phoneRequiredTag" style="font-size: 0.78rem; color: var(--text-tertiary);">(Optional for tenants, required for landlords)</span></label>
           <div class="input-icon">
             <i class="ri-phone-line"></i>
             <input type="tel" id="phone" class="input" placeholder="+263 77 123 4567">
@@ -93,6 +93,80 @@
           <p class="compliance-notice">
             We collect only your birth month and year to enforce age eligibility (COPPA under-13 restriction and 18+ account requirement) on our server. Rejected under-age attempts are not stored.
           </p>
+        </div>
+
+        <!-- Anti-Scam Landlord KYC & Title Deed Verification Section -->
+        <div id="landlordKycSection" style="display: none; padding: 1.25rem; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: var(--radius-lg); background: var(--bg-secondary); margin: 0.5rem 0 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <i class="ri-shield-keyhole-fill" style="color: var(--primary); font-size: 1.25rem;"></i>
+            <h3 style="margin: 0; font-size: 1.05rem;">Landlord Anti-Scam Ownership Verification</h3>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            To protect tenants from con artists and bogus agents, every landlord must upload proof of identity and property ownership. Your private documents are encrypted in private storage, screened by AI, and reviewed by Nortava Admin before approval.
+          </p>
+
+          <div class="input-group">
+            <label for="nationalIdNumber">Zimbabwe National ID Number *</label>
+            <div class="input-icon">
+              <i class="ri-id-card-line"></i>
+              <input type="text" id="nationalIdNumber" class="input" placeholder="e.g., 63-1234567A42">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="ownershipCapacity">Legal Capacity *</label>
+            <select id="ownershipCapacity" class="input">
+              <option value="owner">Property Owner (Title Deed Holder)</option>
+              <option value="cession_holder">Cession / Council Stand Allocation Holder</option>
+              <option value="authorized_representative">Authorized Family / Executor Representative</option>
+              <option value="registered_agent">EACZ Registered Estate Agent</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="input-group">
+              <label for="kycProvince">Property Province *</label>
+              <select id="kycProvince" class="input"></select>
+            </div>
+            <div class="input-group">
+              <label for="kycCity">City / Town / District *</label>
+              <select id="kycCity" class="input"></select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="input-group">
+              <label for="kycArea">Suburb / Area *</label>
+              <select id="kycArea" class="input"></select>
+            </div>
+            <div class="input-group">
+              <label for="propertyAddress">Stand / Street Address *</label>
+              <input type="text" id="propertyAddress" class="input" placeholder="e.g., Stand 412, Knowe">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="titleDeedFile">1. Title Deed / Cession / Council Offer Letter * <span style="font-size: 0.75rem; color: var(--text-tertiary);">(PDF, JPG, PNG, WebP &le; 8MB)</span></label>
+            <input type="file" id="titleDeedFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" style="padding: 0.55rem;">
+            <small id="titleDeedStatus" style="color: var(--text-tertiary); font-size: 0.78rem;"></small>
+          </div>
+
+          <div class="input-group">
+            <label for="nationalIdFile">2. Clear Copy of Zimbabwe National ID * <span style="font-size: 0.75rem; color: var(--text-tertiary);">(PDF, JPG, PNG, WebP &le; 8MB)</span></label>
+            <input type="file" id="nationalIdFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" style="padding: 0.55rem;">
+            <small id="nationalIdStatus" style="color: var(--text-tertiary); font-size: 0.78rem;"></small>
+          </div>
+
+          <div class="input-group">
+            <label for="ratesBillFile">3. Council Rates / ZESA Bill / Authority Letter <span style="font-size: 0.75rem; color: var(--text-tertiary);">(Optional, recommended if representative)</span></label>
+            <input type="file" id="ratesBillFile" class="input" accept="application/pdf,image/jpeg,image/png,image/webp" style="padding: 0.55rem;">
+            <small id="ratesBillStatus" style="color: var(--text-tertiary); font-size: 0.78rem;"></small>
+          </div>
+
+          <label class="checkbox-group" style="margin-top: 0.5rem;">
+            <input type="checkbox" id="antiFraudAttested">
+            <span style="font-size: 0.84rem;">I affirm under Zimbabwean law that I am the rightful owner or legally authorized representative for this property, and all uploaded documents are genuine. Submitting forged deeds or impersonating an owner is criminal fraud reportable to the Zimbabwe Republic Police (ZRP).</span>
+          </label>
         </div>
 
         <div class="input-group">

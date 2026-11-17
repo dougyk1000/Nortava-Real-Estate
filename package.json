@@ -8,11 +8,12 @@
     "build": "vite build",
     "start": "NODE_ENV=production node server.js",
     "preview": "vite preview --port 3000 --host 0.0.0.0",
-    "lint": "node --check server.js && node --check server/ageVerification.js && node --check server/emailCompliance.js && node --check server/security.js && node --check core/api/api.js && node --check core/utils/sanitize.js && node --check core/utils/consent.js",
+    "lint": "node --check server.js && node --check server/aiAssistant.js && node --check server/ageVerification.js && node --check server/emailCompliance.js && node --check server/landlordVerification.js && node --check server/security.js && node --check core/main.js && node --check core/api/api.js && node --check core/auth/auth.js && node --check core/admin/admin.js && node --check core/chatbot/chatbot.js && node --check core/dashboard/dashboard.js && node --check core/listings/listings.js && node --check core/locations/zimbabweLocations.js && node --check core/locations/locationSelector.js && node --check core/neighborhoods/neighborhoods.js && node --check core/notifications/notifications.js && node --check core/pricing/pricing.js && node --check core/utils/navigation.js && node --check core/utils/sanitize.js && node --check core/utils/consent.js",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
+    "@google/genai": "^3.4.0",
     "@supabase/supabase-js": "^2.78.0",
     "express": "^5.3.0",
     "remixicon": "^4.7.0",

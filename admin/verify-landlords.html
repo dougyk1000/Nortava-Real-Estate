@@ -61,15 +61,56 @@
 
       <main class="dashboard-main">
         <div class="dashboard-header">
-          <h1 class="dashboard-title">Verify Landlords</h1>
+          <div>
+            <h1 class="dashboard-title">Verify Landlords &amp; Title Deeds</h1>
+            <p style="color: var(--text-secondary); margin-top: 0.35rem;">Inspect uploaded Zimbabwe National IDs, Title Deeds/Cessions, duplicate-deed alerts, and AI screening verdicts before approving landlords.</p>
+          </div>
         </div>
 
-        <div class="card">
-          <div id="landlordsList">
-            <p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">Loading landlords...</p>
+        <div id="landlordsList" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div class="card">
+            <p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">Loading landlord verification queue...</p>
           </div>
         </div>
       </main>
+    </div>
+  </div>
+
+  <!-- In-page Document Preview Modal -->
+  <div id="docViewerModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="width: 100%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+        <h3 id="docViewerTitle" style="margin: 0; font-size: 1.1rem;">Verification Document</h3>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a id="docDownloadLink" href="#" download="verification-document" class="btn btn-sm btn-outline">
+            <i class="ri-download-line"></i> Download
+          </a>
+          <button type="button" id="closeDocModalBtn" class="btn btn-sm btn-ghost" aria-label="Close document modal">
+            <i class="ri-close-line"></i> Close
+          </button>
+        </div>
+      </div>
+      <div id="docViewerBody" style="flex: 1; overflow: auto; padding-top: 1rem; display: flex; align-items: center; justify-content: center; min-height: 360px; background: var(--bg-tertiary); border-radius: var(--radius); margin-top: 1rem;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Reason Modal -->
+  <div id="rejectReasonModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="width: 100%; max-width: 480px;">
+      <h3 style="margin-bottom: 0.5rem;">Reject Landlord Verification</h3>
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">Specify why these documents are declined. The landlord will see this message and can resubmit valid documents.</p>
+      <form id="rejectReasonForm">
+        <input type="hidden" id="rejectUserId">
+        <div class="input-group">
+          <label for="rejectReasonInput">Rejection Reason</label>
+          <textarea id="rejectReasonInput" class="input" rows="4" placeholder="e.g., Title Deed owner name does not match Zimbabwe National ID, or image is blurry." required></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+          <button type="button" id="cancelRejectBtn" class="btn btn-ghost">Cancel</button>
+          <button type="submit" class="btn btn-danger"><i class="ri-close-circle-line"></i> Confirm Rejection</button>
+        </div>
+      </form>
     </div>
   </div>
 

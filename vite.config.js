@@ -9,6 +9,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     hmr: false,
+    ws: false,
     allowedHosts: true
   },
   resolve: {
@@ -31,6 +32,7 @@ export default defineConfig({
         report: resolve(rootDir, 'report.html'),
         login: resolve(rootDir, 'auth/login.html'),
         register: resolve(rootDir, 'auth/register.html'),
+        resetPassword: resolve(rootDir, 'auth/reset-password.html'),
         tenantDashboard: resolve(rootDir, 'dashboard/tenant.html'),
         landlordDashboard: resolve(rootDir, 'dashboard/landlord.html'),
         landlordAddListing: resolve(rootDir, 'dashboard/landlord-add.html'),

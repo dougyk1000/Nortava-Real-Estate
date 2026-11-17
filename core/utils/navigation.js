@@ -7,30 +7,87 @@ export function initNavigation() {
   highlightCurrentPage();
 }
 
+function buildFallbackMobileNav() {
+  const nav = document.createElement('nav');
+  nav.className = 'mobile-nav';
+  nav.setAttribute('aria-label', 'Mobile navigation');
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'mobile-nav-close';
+  closeBtn.setAttribute('aria-label', 'Close menu');
+  closeBtn.innerHTML = '<i class="ri-close-line"></i>';
+  nav.appendChild(closeBtn);
+
+  const list = document.createElement('ul');
+  list.className = 'mobile-nav-links';
+
+  const existingLinks = document.querySelectorAll('.nav-links a, .sidebar-menu a');
+  const seenHrefs = new Set();
+  existingLinks.forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href || href === '#' || seenHrefs.has(href)) return;
+    seenHrefs.add(href);
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = href;
+    link.className = 'nav-link';
+    link.textContent = a.textContent.trim();
+    li.appendChild(link);
+    list.appendChild(li);
+  });
+  nav.appendChild(list);
+
+  const actions = document.createElement('div');
+  actions.className = 'mobile-nav-actions';
+  const hasLoginBtn = Boolean(document.querySelector('.nav-actions a[href*="login.html"]'));
+  if (hasLoginBtn) {
+    actions.innerHTML = `
+      <a href="/auth/login.html" class="btn btn-secondary btn-lg">Login</a>
+      <a href="/auth/register.html" class="btn btn-primary btn-lg">Get Started</a>
+    `;
+  } else {
+    actions.innerHTML = `
+      <button type="button" onclick="logout()" class="btn btn-secondary btn-lg"><i class="ri-logout-box-line"></i> Logout</button>
+    `;
+  }
+  nav.appendChild(actions);
+
+  document.body.appendChild(nav);
+  return nav;
+}
+
 function setupMobileMenu() {
   const menuBtn = document.querySelector('.mobile-menu-btn');
-  const mobileNav = document.querySelector('.mobile-nav');
-  const closeBtn = document.querySelector('.mobile-nav-close');
+  if (!menuBtn) return;
 
-  if (menuBtn && mobileNav) {
-    menuBtn.addEventListener('click', () => {
-      mobileNav.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    });
-
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeMobileNav);
-    }
-
-    mobileNav.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', closeMobileNav);
-    });
+  let mobileNav = document.querySelector('.mobile-nav');
+  if (!mobileNav) {
+    mobileNav = buildFallbackMobileNav();
   }
+  const closeBtn = mobileNav.querySelector('.mobile-nav-close');
 
   function closeMobileNav() {
     mobileNav.classList.remove('active');
     document.body.style.overflow = '';
   }
+
+  menuBtn.addEventListener('click', () => {
+    mobileNav.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+
+  closeBtn?.addEventListener('click', closeMobileNav);
+
+  mobileNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMobileNav);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+      closeMobileNav();
+    }
+  });
 }
 
 function setupScrollEffect() {
@@ -93,7 +150,7 @@ export async function updateNavForAuth() {
 
   if (navActions && navActions.querySelector('a[href*="login.html"]')) {
     navActions.innerHTML = `
-      <button class="theme-toggle" aria-label="Toggle theme">
+      <button type="button" class="theme-toggle" aria-label="Toggle theme">
         <i class="ri-moon-line"></i>
       </button>
       <div class="user-menu" style="display: flex; gap: 1rem; align-items: center;">
