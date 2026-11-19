@@ -14,6 +14,7 @@ import {
 } from '../server/emailCompliance.js';
 import { createApp } from '../server.js';
 import { resolvePublicAppOrigin } from '../server/security.js';
+import { injectSocialMetaTags } from '../server/seoMetadata.js';
 import { escapeHtml, safeUrl, safeImageUrl, sanitizePhone } from '../core/utils/sanitize.js';
 import { calculateRecommendedPrice } from '../core/pricing/pricing.js';
 import { getNeighborhoodInfo } from '../core/neighborhoods/neighborhoods.js';
@@ -756,5 +757,92 @@ test('Tariro AI Property Finder: filters live Zimbabwe listings by province/city
     '/listings.html?province=Mashonaland+West&city=Norton&area=Knowe&type=rent&max_price=400&rooms=3'
   );
 });
+
+test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Canonical, and Schema.org JSON-LD across pages', async () => {
+  assert.equal(fs.existsSync(path.join(ROOT, 'assets/images/nortava-og-card.jpg')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'assets/images/logo/nortava-logo.png')), true);
+
+  const { server, baseUrl } = await startTestServer();
+  try {
+    const headers = {
+      'x-forwarded-host': 'nortava-share.example.com',
+      'x-forwarded-proto': 'https'
+    };
+
+    for (const reqPath of ['/', '/listings.html', '/faq.html', '/how-it-works.html', '/safety.html', '/legal/privacy.html']) {
+      const res = await fetch(`${baseUrl}${reqPath}`, { headers });
+      assert.equal(res.status, 200, `Expected 200 for ${reqPath}`);
+      const html = await res.text();
+
+      assert.match(html, /<meta name="robots" content="index, follow, max-image-preview:large/);
+      assert.match(html, /<meta property="og:site_name" content="Nortava Real Estate">/);
+      assert.match(html, /<meta property="og:image" content="https:\/\/nortava-share\.example\.com\/assets\/images\/nortava-og-card\.jpg">/);
+      assert.match(html, /<meta property="og:image:secure_url" content="https:\/\/nortava-share\.example\.com\/assets\/images\/nortava-og-card\.jpg">/);
+      assert.match(html, /<meta property="og:logo" content="https:\/\/nortava-share\.example\.com\/assets\/images\/logo\/nortava-logo\.png">/);
+      assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
+      assert.match(html, /<meta name="twitter:image" content="https:\/\/nortava-share\.example\.com\/assets\/images\/nortava-og-card\.jpg">/);
+      assert.match(html, /<link rel="canonical" href="https:\/\/nortava-share\.example\.com\//);
+      assert.doesNotMatch(html, /content="https:\/\/nortava\.co\.zw"/);
+
+      const ldMatch = html.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/);
+      assert.ok(ldMatch, `Missing Schema.org JSON-LD on ${reqPath}`);
+      const ld = JSON.parse(ldMatch[1]);
+      assert.equal(ld['@context'], 'https://schema.org');
+      assert.ok(Array.isArray(ld['@graph']) && ld['@graph'].length >= 2);
+      const types = new Set(ld['@graph'].map(item => item['@type']));
+      if (reqPath === '/') assert.equal(types.has('WebSite'), true);
+      if (reqPath === '/faq.html') assert.equal(types.has('FAQPage'), true);
+      if (reqPath === '/how-it-works.html') assert.equal(types.has('HowTo'), true);
+    }
+
+    // Auth / admin / dashboard pages must be marked noindex, nofollow
+    for (const privatePath of ['/auth/login.html', '/admin/index.html']) {
+      const privRes = await fetch(`${baseUrl}${privatePath}`, { headers });
+      assert.equal(privRes.status, 200);
+      assert.equal(privRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+      assert.match(await privRes.text(), /<meta name="robots" content="noindex, nofollow">/);
+    }
+
+    const robotsRes = await fetch(`${baseUrl}/robots.txt`, { headers });
+    assert.equal(robotsRes.status, 200);
+    const robotsTxt = await robotsRes.text();
+    assert.match(robotsTxt, /Allow:\s*\//);
+    assert.match(robotsTxt, /Disallow:\s*\/admin\//);
+    assert.match(robotsTxt, /Sitemap:\s*https:\/\/nortava-share\.example\.com\/sitemap\.xml/);
+
+    const sitemapRes = await fetch(`${baseUrl}/sitemap.xml`, { headers });
+    assert.equal(sitemapRes.status, 200);
+    assert.match(sitemapRes.headers.get('content-type') || '', /xml/);
+    const sitemapXml = await sitemapRes.text();
+    assert.match(sitemapXml, /<loc>https:\/\/nortava-share\.example\.com\/<\/loc>/);
+    assert.match(sitemapXml, /<loc>https:\/\/nortava-share\.example\.com\/listings\.html<\/loc>/);
+    assert.match(sitemapXml, /<loc>https:\/\/nortava-share\.example\.com\/faq\.html<\/loc>/);
+    assert.doesNotMatch(sitemapXml, /\/admin\/|\/dashboard\/|\/auth\/login\.html/);
+
+    const favRes = await fetch(`${baseUrl}/favicon.ico`);
+    assert.equal(favRes.status, 200);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+
+  // Verify XSS payloads inside listing metadata are neutralized in attributes and JSON-LD
+  const maliciousHtml = injectSocialMetaTags('<html><head><title>X</title></head><body></body></html>', {
+    origin: 'https://nortava-share.example.com',
+    pathname: '/listing.html',
+    listingSeo: {
+      id: 'abc-123',
+      title: '3 Bed House </script><script>alert("xss")</script>',
+      description: 'Safe description "quoted" <img src=x>',
+      imageUrl: 'https://cdn.example.com/house.jpg',
+      price: 450,
+      type: 'rent',
+      location: 'Knowe, Norton'
+    }
+  });
+  assert.doesNotMatch(maliciousHtml, /<script>alert\("xss"\)<\/script>/i);
+  assert.match(maliciousHtml, /&lt;\/script&gt;/);
+  assert.match(maliciousHtml, /\\u003c\/script>/);
+});
+
 
 

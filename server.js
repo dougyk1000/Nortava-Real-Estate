@@ -1,5 +1,6 @@
 import express from 'express';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyMinimumAge, COPPA_MIN_AGE, PLATFORM_MIN_AGE } from './server/ageVerification.js';
@@ -30,6 +31,13 @@ import {
   analyzeLandlordDocumentsWithGemini,
   downloadVerificationDocBuffer
 } from './server/landlordVerification.js';
+import {
+  fetchListingForSeo,
+  injectSocialMetaTags,
+  buildSitemapXml,
+  buildRobotsTxt,
+  isNoIndexPath
+} from './server/seoMetadata.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,7 +124,8 @@ async function fetchVerificationForUser(adminClient, userId) {
   return null;
 }
 
-export function createApp() {
+export function createApp(options = {}) {
+  const { isProd = process.env.NODE_ENV === 'production', getVite = () => null } = options;
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -1366,6 +1375,91 @@ export function createApp() {
     return res.status(200).json(result);
   });
 
+  // --- CRAWLER / SEARCH ENGINE ROBOTS, SITEMAP & FAVICON ---
+  app.get('/robots.txt', (req, res) => {
+    const origin = resolvePublicAppOrigin(req);
+    res.type('text/plain').send(buildRobotsTxt(origin));
+  });
+
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const origin = resolvePublicAppOrigin(req);
+      const xml = await buildSitemapXml(origin, createPublicServerSupabase());
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      return res.status(200).type('application/xml; charset=utf-8').send(xml);
+    } catch {
+      return res.status(500).type('text/plain').send('Unable to generate sitemap');
+    }
+  });
+
+  app.get('/favicon.ico', (_req, res) => {
+    const iconPath = path.join(__dirname, 'assets', 'images', 'logo', 'nortava-logo.png');
+    if (fs.existsSync(iconPath)) {
+      return res.sendFile(iconPath);
+    }
+    return res.status(204).end();
+  });
+
+  // --- DYNAMIC OPENGRAPH / TWITTER / SCHEMA.ORG HTML METADATA ---
+  app.use(async (req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    const reqPath = req.path || '/';
+    if (
+      reqPath.startsWith('/api/') ||
+      reqPath.startsWith('/assets/') ||
+      reqPath.startsWith('/core/') ||
+      reqPath.startsWith('/@') ||
+      reqPath.startsWith('/node_modules/')
+    ) {
+      return next();
+    }
+
+    const isHtmlRoute = reqPath === '/' || reqPath.endsWith('.html');
+    if (!isHtmlRoute) return next();
+
+    try {
+      const relPath = reqPath === '/' ? 'index.html' : reqPath.replace(/^\/+/, '');
+      const htmlRoot = isProd ? path.join(__dirname, 'dist') : __dirname;
+      const resolvedPath = path.resolve(htmlRoot, relPath);
+      if (!resolvedPath.startsWith(`${htmlRoot}${path.sep}`)) {
+        return next();
+      }
+      if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+        return next();
+      }
+
+      const rawHtml = await fs.promises.readFile(resolvedPath, 'utf8');
+      const origin = resolvePublicAppOrigin(req);
+      const listingId = reqPath === '/listing.html' ? String(req.query?.id || '').trim() : '';
+      let listingSeo = null;
+      if (listingId) {
+        listingSeo = await fetchListingForSeo(createPublicServerSupabase(), listingId);
+      }
+
+      let finalHtml = injectSocialMetaTags(rawHtml, {
+        origin,
+        pathname: reqPath,
+        listingId,
+        listingSeo
+      });
+
+      const vite = typeof getVite === 'function' ? getVite() : null;
+      if (!isProd && vite) {
+        finalHtml = await vite.transformIndexHtml(req.originalUrl, finalHtml);
+      }
+
+      if (isNoIndexPath(reqPath)) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        res.setHeader('Cache-Control', 'no-store');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=60');
+      }
+      return res.status(200).type('html').send(finalHtml);
+    } catch {
+      return next();
+    }
+  });
+
   return app;
 }
 
@@ -1405,14 +1499,15 @@ function resolveListenConfig() {
 }
 
 async function startServer() {
-  const app = createApp();
   const isProd = process.env.NODE_ENV === 'production';
+  let vite = null;
+  const app = createApp({ isProd, getVite: () => vite });
   const { host, port } = resolveListenConfig();
 
-  let vite = null;
   if (isProd) {
     const distDir = path.join(__dirname, 'dist');
     app.use(express.static(distDir));
+    app.use('/assets', express.static(path.join(__dirname, 'assets')));
   } else {
     const { createServer: createViteServer } = await import('vite');
     vite = await createViteServer({
