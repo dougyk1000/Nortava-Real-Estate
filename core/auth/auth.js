@@ -450,8 +450,45 @@ function setupKycFileListeners() {
   });
 }
 
+function compressImageIfNeeded(file) {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith('image/') || file.size <= 1.5 * 1024 * 1024) {
+      return resolve(null);
+    }
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        URL.revokeObjectURL(objUrl);
+        const maxDim = 1800;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.84);
+        resolve(compressed && compressed.startsWith('data:image/jpeg;base64,') ? compressed : null);
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objUrl);
+      resolve(null);
+    };
+    img.src = objUrl;
+  });
+}
+
 export function readDocumentAsBase64(file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (!file) return resolve(null);
     if (!ALLOWED_DOC_TYPES.has(file.type)) {
       return reject(new Error(`${file.name}: Only PDF, JPG, PNG, or WebP documents are allowed.`));
@@ -459,6 +496,16 @@ export function readDocumentAsBase64(file) {
     if (file.size > MAX_DOC_BYTES) {
       return reject(new Error(`${file.name}: File must be under 8MB.`));
     }
+
+    const compressedDataUrl = await compressImageIfNeeded(file);
+    if (compressedDataUrl) {
+      return resolve({
+        fileName: file.name.replace(/\.[^.]+$/, '.jpg'),
+        mimeType: 'image/jpeg',
+        dataBase64: compressedDataUrl
+      });
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       resolve({
@@ -470,6 +517,33 @@ export function readDocumentAsBase64(file) {
     reader.onerror = () => reject(new Error(`Unable to read ${file.name}.`));
     reader.readAsDataURL(file);
   });
+}
+
+function showRegisterBanner({ tone = 'error', title = '', message = '', actionHtml = '' }) {
+  const banner = document.getElementById('registerStatusBanner');
+  if (!banner) return;
+
+  const palette = {
+    error: { bg: 'rgba(239, 68, 68, 0.08)', border: 'var(--danger)', color: 'var(--danger)' },
+    warning: { bg: 'rgba(245, 158, 11, 0.1)', border: 'var(--warning)', color: 'var(--warning)' },
+    success: { bg: 'rgba(34, 197, 94, 0.1)', border: 'var(--success)', color: 'var(--success)' },
+    info: { bg: 'rgba(37, 99, 235, 0.08)', border: 'var(--primary)', color: 'var(--primary)' }
+  }[tone] || { bg: 'var(--bg-secondary)', border: 'var(--border)', color: 'var(--primary)' };
+
+  banner.style.display = 'block';
+  banner.style.background = palette.bg;
+  banner.style.borderColor = palette.border;
+  banner.innerHTML = `
+    <div style="font-weight: 700; color: ${palette.color}; margin-bottom: 0.25rem;">${escapeHtml(title)}</div>
+    <div style="color: var(--text-secondary);">${escapeHtml(message)}</div>
+    ${actionHtml ? `<div style="margin-top: 0.65rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">${actionHtml}</div>` : ''}
+  `;
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function clearRegisterBanner() {
+  const banner = document.getElementById('registerStatusBanner');
+  if (banner) banner.style.display = 'none';
 }
 
 function syncLandlordKycVisibility(role) {
@@ -490,7 +564,7 @@ function syncLandlordKycVisibility(role) {
       : '(Optional for tenants, required for landlords)';
   }
 
-  ['nationalIdNumber', 'ownershipCapacity', 'kycProvince', 'kycCity', 'kycArea', 'propertyAddress', 'titleDeedFile', 'nationalIdFile', 'antiFraudAttested']
+  ['nationalIdNumber', 'ownershipCapacity', 'kycProvince', 'kycCity', 'propertyAddress', 'titleDeedFile', 'nationalIdFile', 'antiFraudAttested']
     .forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.required = isLandlord;
@@ -502,11 +576,22 @@ function setupRegisterForm() {
   const form = document.getElementById('registerForm');
   if (!form) return;
 
+  const queryRole = new URLSearchParams(window.location.search).get('role');
+  if (queryRole === 'landlord' || queryRole === 'tenant') {
+    document.querySelectorAll('.role-option').forEach(opt => {
+      const radio = opt.querySelector('input[type="radio"]');
+      const match = radio?.value === queryRole;
+      if (radio) radio.checked = match;
+      opt.classList.toggle('active', Boolean(match));
+    });
+  }
+
   const initialRole = document.querySelector('input[name="role"]:checked')?.value || 'tenant';
   syncLandlordKycVisibility(initialRole);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    clearRegisterBanner();
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -521,33 +606,44 @@ function setupRegisterForm() {
     const submitBtn = form.querySelector('button[type="submit"]');
 
     if (!birthMonth || !birthYear) {
-      showToast('Age Verification Required', 'Please select your birth month and year.', 'error');
+      const msg = 'Please select your birth month and year.';
+      showRegisterBanner({ tone: 'error', title: 'Age Verification Required', message: msg });
+      showToast('Age Verification Required', msg, 'error');
       return;
     }
     if (!termsAccepted) {
-      showToast('Terms Required', 'You must agree to the Terms of Service and Privacy Policy.', 'error');
+      const msg = 'You must agree to the Terms of Service and Privacy Policy.';
+      showRegisterBanner({ tone: 'error', title: 'Terms Required', message: msg });
+      showToast('Terms Required', msg, 'error');
       return;
     }
     if (password !== confirmPassword) {
-      showToast('Password Mismatch', 'Passwords do not match.', 'error');
+      const msg = 'Passwords do not match.';
+      showRegisterBanner({ tone: 'error', title: 'Password Mismatch', message: msg });
+      showToast('Password Mismatch', msg, 'error');
       return;
     }
     if (password.length < 8) {
-      showToast('Weak Password', 'Password must be at least 8 characters.', 'error');
+      const msg = 'Password must be at least 8 characters.';
+      showRegisterBanner({ tone: 'error', title: 'Weak Password', message: msg });
+      showToast('Weak Password', msg, 'error');
       return;
     }
 
     let landlordKyc = null;
     if (role === 'landlord') {
       if (phone.length < 7) {
-        showToast('Phone Required', 'Landlords must enter a valid Zimbabwe contact phone number.', 'error');
+        const msg = 'Landlords must enter a valid Zimbabwe contact phone number.';
+        showRegisterBanner({ tone: 'error', title: 'Phone Required', message: msg });
+        showToast('Phone Required', msg, 'error');
         return;
       }
       const nationalIdNumber = document.getElementById('nationalIdNumber')?.value.trim() || '';
       const ownershipCapacity = document.getElementById('ownershipCapacity')?.value || 'owner';
-      const propertyProvince = document.getElementById('kycProvince')?.value || kycLocationPicker?.getValues()?.province || '';
-      const propertyCity = document.getElementById('kycCity')?.value || kycLocationPicker?.getValues()?.city || '';
-      const propertyArea = document.getElementById('kycArea')?.value || kycLocationPicker?.getValues()?.area || '';
+      const propertyProvince = document.getElementById('kycProvince')?.value || kycLocationPicker?.getValues?.()?.province || '';
+      const propertyCity = document.getElementById('kycCity')?.value || kycLocationPicker?.getValues?.()?.city || '';
+      const rawArea = document.getElementById('kycArea')?.value || '';
+      const propertyArea = rawArea === '__other__' ? '' : rawArea;
       const propertyAddress = document.getElementById('propertyAddress')?.value.trim() || '';
       const antiFraudAttested = Boolean(document.getElementById('antiFraudAttested')?.checked);
       const titleDeedFile = document.getElementById('titleDeedFile')?.files?.[0] || null;
@@ -555,15 +651,21 @@ function setupRegisterForm() {
       const ratesBillFile = document.getElementById('ratesBillFile')?.files?.[0] || null;
 
       if (!nationalIdNumber || !propertyProvince || !propertyCity || !propertyAddress) {
-        showToast('Verification Details Missing', 'Please provide your Zimbabwe National ID and property location details.', 'error');
+        const msg = 'Please provide your Zimbabwe National ID and property province, city/town, and street/stand address.';
+        showRegisterBanner({ tone: 'error', title: 'Verification Details Missing', message: msg });
+        showToast('Verification Details Missing', msg, 'error');
         return;
       }
       if (!titleDeedFile || !nationalIdFile) {
-        showToast('Documents Required', 'Please upload both your Title Deed/Cession and your Zimbabwe National ID copy.', 'error');
+        const msg = 'Please upload both your Title Deed/Cession and your Zimbabwe National ID copy.';
+        showRegisterBanner({ tone: 'error', title: 'Documents Required', message: msg });
+        showToast('Documents Required', msg, 'error');
         return;
       }
       if (!antiFraudAttested) {
-        showToast('Declaration Required', 'Please affirm the anti-fraud & legal ownership declaration.', 'error');
+        const msg = 'Please affirm the anti-fraud & legal ownership declaration.';
+        showRegisterBanner({ tone: 'error', title: 'Declaration Required', message: msg });
+        showToast('Declaration Required', msg, 'error');
         return;
       }
 
@@ -590,7 +692,9 @@ function setupRegisterForm() {
       } catch (fileErr) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="ri-user-add-line"></i> Create Account';
-        showToast('Document Error', fileErr.message || 'Unable to read verification files.', 'error');
+        const msg = fileErr.message || 'Unable to read verification files.';
+        showRegisterBanner({ tone: 'error', title: 'Document Error', message: msg });
+        showToast('Document Error', msg, 'error');
         return;
       }
     }
@@ -615,7 +719,37 @@ function setupRegisterForm() {
 
       if (error) {
         const isAgeBlock = error.code === 'COPPA_UNDER_13' || error.code === 'MINIMUM_AGE_REQUIRED';
-        showToast(isAgeBlock ? 'Age Verification' : 'Registration Failed', error.message, 'error');
+        const isAlreadyRegistered = error.code === 'EMAIL_ALREADY_REGISTERED';
+        if (isAlreadyRegistered) {
+          showRegisterBanner({
+            tone: 'warning',
+            title: 'Account Already Exists',
+            message: error.message,
+            actionHtml: `
+              <a href="/auth/login.html?email=${encodeURIComponent(email)}" class="btn btn-sm btn-primary"><i class="ri-login-box-line"></i> Sign In</a>
+              <a href="/auth/reset-password.html" class="btn btn-sm btn-outline"><i class="ri-key-line"></i> Reset Password</a>
+              <button type="button" id="regResendBtn" class="btn btn-sm btn-ghost"><i class="ri-mail-send-line"></i> Resend Confirmation</button>
+            `
+          });
+          document.getElementById('regResendBtn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('regResendBtn');
+            if (btn) btn.disabled = true;
+            const { data: rData, error: rErr } = await resendConfirmationEmail(email);
+            if (btn) btn.disabled = false;
+            if (rErr) {
+              showToast('Resend Failed', rErr.message, 'error');
+            } else {
+              showToast('Confirmation Sent', rData?.message || 'Check your inbox and spam folder.', 'success');
+            }
+          });
+        } else {
+          showRegisterBanner({
+            tone: 'error',
+            title: isAgeBlock ? 'Age Verification Failed' : 'Registration Failed',
+            message: error.message || 'Unable to create your account right now.'
+          });
+        }
+        showToast(isAgeBlock ? 'Age Verification' : isAlreadyRegistered ? 'Account Already Exists' : 'Registration Failed', error.message, 'error');
         return;
       }
 
@@ -623,6 +757,7 @@ function setupRegisterForm() {
         const msg = role === 'landlord'
           ? 'Account & ownership documents submitted! Confirm your email while AI & Admin verify your Title Deeds.'
           : 'Account created! Please check your email to confirm before signing in.';
+        showRegisterBanner({ tone: 'success', title: 'Account Created — Check Your Email', message: msg });
         showToast('Verify Email', msg, 'success');
         setTimeout(() => {
           window.location.href = `/auth/login.html?registered=1&email=${encodeURIComponent(email)}`;
@@ -630,13 +765,11 @@ function setupRegisterForm() {
         return;
       }
 
-      showToast(
-        'Success',
-        role === 'landlord'
-          ? 'Account created! Your Title Deed & ID documents are now in AI & Admin review.'
-          : 'Account created successfully!',
-        'success'
-      );
+      const successMsg = role === 'landlord'
+        ? 'Account created! Your Title Deed & ID documents are now in AI & Admin review.'
+        : 'Account created successfully!';
+      showRegisterBanner({ tone: 'success', title: 'Welcome to Nortava!', message: successMsg });
+      showToast('Success', successMsg, 'success');
       redirectByRole(role);
     } finally {
       submitBtn.disabled = false;

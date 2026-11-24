@@ -1,9 +1,19 @@
 export const BRAND_NAME = 'Nortava Real Estate';
 export const DEFAULT_OG_IMAGE_PATH = '/assets/images/nortava-og-card.jpg';
 export const DEFAULT_LOGO_PATH = '/assets/images/logo/nortava-logo.png';
-export const DEFAULT_TITLE = 'Nortava Real Estate – Zimbabwe Verified Property Directory';
+export const DEFAULT_GOOGLE_SITE_VERIFICATION = '4aCMJuKR4l8mPFePSPdcX8kGYdonI_o4O4Uek2RSIiw';
+export const DEFAULT_TITLE = 'Nortava - Real Estate Across Zimbabwe';
 export const DEFAULT_DESCRIPTION =
-  'Find verified homes for rent and sale across all 10 provinces of Zimbabwe. Browse free, use Tariro AI, and connect with document-verified landlords on Nortava.';
+  'Zimbabwe-wide property rental and sales directory across all 10 provinces with Tariro AI property finder, Title Deed & National ID verified landlords, and EcoCash, OneMoney, Mukuru & InnBucks unlock support. Find your perfect property anywhere in Zimbabwe and connect directly with verified landlords.';
+
+export function resolveGoogleVerificationToken() {
+  const raw = String(process.env.GOOGLE_SITE_VERIFICATION || '').trim();
+  const stripped = raw.replace(/^google-site-verification=/i, '').trim();
+  if (/^[a-zA-Z0-9_-]{10,128}$/.test(stripped)) {
+    return stripped;
+  }
+  return DEFAULT_GOOGLE_SITE_VERIFICATION;
+}
 
 export const PUBLIC_SITEMAP_ROUTES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
@@ -22,103 +32,103 @@ export const PUBLIC_SITEMAP_ROUTES = [
 
 export const PAGE_SEO_MAP = {
   '/': {
-    title: 'Nortava Real Estate – Zimbabwe Verified Property Directory',
+    title: 'Nortava - Real Estate Across Zimbabwe',
     description:
-      'Find verified homes for rent and sale across all 10 provinces of Zimbabwe. Browse free, use Tariro AI, and connect with document-verified landlords.',
+      'Find your perfect property anywhere in Zimbabwe across all 10 provinces — Harare, Bulawayo, Norton, Mutare, Gweru, Masvingo, and Victoria Falls. Browse free, use Tariro AI to match conditions, and connect directly with document-verified landlords.',
     breadcrumb: null
   },
   '/index.html': {
-    title: 'Nortava Real Estate – Zimbabwe Verified Property Directory',
+    title: 'Nortava - Real Estate Across Zimbabwe',
     description:
-      'Find verified homes for rent and sale across all 10 provinces of Zimbabwe. Browse free, use Tariro AI, and connect with document-verified landlords.',
+      'Find your perfect property anywhere in Zimbabwe across all 10 provinces — Harare, Bulawayo, Norton, Mutare, Gweru, Masvingo, and Victoria Falls. Browse free, use Tariro AI to match conditions, and connect directly with document-verified landlords.',
     breadcrumb: null
   },
   '/listings.html': {
-    title: 'Browse Verified Zimbabwe Properties – Nortava Real Estate',
+    title: 'Browse Properties Across Zimbabwe - Nortava Real Estate',
     description:
-      'Search houses, flats, cottages, and stands across Harare, Bulawayo, Norton, Mutare, Gweru, Masvingo, and all 10 provinces on Nortava Real Estate.',
+      'Browse verified rental houses, flats, cottages, rooms, and stands for sale across Harare, Bulawayo, Norton (Knowe, Galloway, Katanga), Mutare, Gweru, Masvingo, and all 10 provinces of Zimbabwe.',
     breadcrumb: 'Browse Listings'
   },
   '/listing.html': {
-    title: 'Verified Property Details – Nortava Real Estate Zimbabwe',
+    title: 'Property Details - Nortava Real Estate Zimbabwe',
     description:
-      'Inspect verified Zimbabwe property details, photos, and amenities, and connect directly with document-verified landlords on Nortava Real Estate.',
+      'View verified Zimbabwe property photos, pricing, water/electricity/solar amenities, and unlock direct contact details for document-verified landlords on Nortava Real Estate.',
     breadcrumb: 'Property Details'
   },
   '/how-it-works.html': {
-    title: 'How Nortava Works – Direct Verified Rentals in Zimbabwe',
+    title: 'How It Works - Nortava Real Estate Zimbabwe',
     description:
-      'Browse Zimbabwe properties free, ask Tariro AI to match suburbs and conditions, and unlock verified landlord contacts for a flat $2.50 fee.',
+      'Learn how Nortava Real Estate works in Zimbabwe: browse listings free across all 10 provinces, ask Tariro AI to match suburbs and conditions, and pay a flat $2.50 via EcoCash, OneMoney, Mukuru, or InnBucks to contact verified landlords directly.',
     breadcrumb: 'How It Works'
   },
   '/about.html': {
-    title: 'About Nortava Real Estate – Verified Zimbabwe Housing',
+    title: 'About Us - Nortava Real Estate Zimbabwe',
     description:
-      'Learn how Nortava Real Estate connects tenants directly with Title Deed and National ID verified landlords across all 10 provinces of Zimbabwe.',
+      'Learn how Nortava Real Estate eliminates agent delays and rental scams across Zimbabwe by connecting tenants directly with Title Deed and National ID verified landlords across all 10 provinces.',
     breadcrumb: 'About Us'
   },
   '/faq.html': {
-    title: 'Frequently Asked Questions – Nortava Real Estate',
+    title: 'Frequently Asked Questions - Nortava Real Estate Zimbabwe',
     description:
-      'Get answers about searching Zimbabwe homes, landlord Title Deed and National ID verification, EcoCash and InnBucks fees, and tenant safety.',
+      'Find answers to common questions about browsing Zimbabwe properties on Nortava, landlord Title Deed and National ID verification, EcoCash and InnBucks unlock fees, and tenant safety.',
     breadcrumb: 'FAQ'
   },
   '/safety.html': {
-    title: 'Tenant & Landlord Safety Guide – Nortava Real Estate',
+    title: 'Safety Guide - Nortava Real Estate Zimbabwe',
     description:
-      'Essential anti-scam tips, Title Deed verification checks, and safe viewing practices for renting or buying property anywhere in Zimbabwe.',
+      'Essential anti-scam tips, Title Deed and National ID verification checks, and safe viewing practices for renting or buying property anywhere in Zimbabwe.',
     breadcrumb: 'Safety Guide'
   },
   '/contact.html': {
-    title: 'Contact Nortava Real Estate – Zimbabwe Property Support',
+    title: 'Contact Us - Nortava Real Estate Zimbabwe',
     description:
-      'Reach Nortava Real Estate support for landlord KYC verification help, tenant assistance, listing questions, or inquiries across Zimbabwe.',
+      'Get in touch with Nortava Real Estate support for landlord KYC verification help, tenant assistance, listing questions, or partnership inquiries across Zimbabwe.',
     breadcrumb: 'Contact Us'
   },
   '/report.html': {
-    title: 'Report a Listing or Scam – Nortava Real Estate',
+    title: 'Report an Issue - Nortava Real Estate Zimbabwe',
     description:
-      'Report suspicious listings, inaccurate property details, or suspected fraud so our moderation team can protect Zimbabwean tenants and landlords.',
+      'Report suspicious listings, inaccurate property details, or suspected scams so our moderation team can protect Zimbabwean tenants and landlords.',
     breadcrumb: 'Report Issue'
   },
   '/auth/login.html': {
-    title: 'Sign In – Nortava Real Estate',
+    title: 'Login - Nortava Real Estate',
     description:
       'Sign in to your Nortava Real Estate account to manage verified Zimbabwe property listings, saved homes, and unlocked landlord contacts.',
     noindex: true
   },
   '/auth/register.html': {
-    title: 'Create Account – Nortava Real Estate',
+    title: 'Create Account - Nortava Real Estate',
     description:
-      'Register as a tenant or submit Title Deeds and National ID for verified landlord onboarding on Nortava Real Estate across Zimbabwe.',
+      'Create a Nortava Real Estate account as a tenant or submit Title Deeds and Zimbabwe National ID for verified landlord onboarding across all 10 provinces.',
     noindex: true
   },
   '/auth/reset-password.html': {
-    title: 'Reset Password – Nortava Real Estate',
+    title: 'Reset Password - Nortava Real Estate',
     description:
       'Request a password reset link or set a new password securely for your Nortava Real Estate account.',
     noindex: true
   },
   '/legal/terms.html': {
-    title: 'Terms of Service – Nortava Real Estate',
+    title: 'Terms of Service - Nortava Real Estate',
     description:
       'Read the Nortava Real Estate Terms of Service governing Zimbabwe property listings, landlord KYC verification, and platform unlock fees.',
     breadcrumb: 'Terms of Service'
   },
   '/legal/privacy.html': {
-    title: 'Privacy Policy – Nortava Real Estate',
+    title: 'Privacy Policy - Nortava Real Estate',
     description:
-      'Learn how Nortava Real Estate collects, protects, and processes personal information and landlord verification documents safely.',
+      'Learn how Nortava Real Estate collects, protects, and processes personal information and landlord verification documents safely under Zimbabwe law.',
     breadcrumb: 'Privacy Policy'
   },
   '/legal/cookies.html': {
-    title: 'Cookie & Storage Policy – Nortava Real Estate',
+    title: 'Cookie & Storage Policy - Nortava Real Estate',
     description:
       'Understand how Nortava Real Estate uses essential session storage and optional preference controls across the platform.',
     breadcrumb: 'Cookie Policy'
   },
   '/legal/dmca.html': {
-    title: 'DMCA & Copyright Policy – Nortava Real Estate',
+    title: 'DMCA & Copyright Policy - Nortava Real Estate',
     description:
       'Submit copyright takedown notices or intellectual property inquiries for content hosted on Nortava Real Estate.',
     breadcrumb: 'DMCA Policy'
@@ -177,7 +187,7 @@ export async function fetchListingForSeo(supabase, listingId) {
   try {
     const queryPromise = supabase
       .from('listings')
-      .select('id, title, price, type, location, rooms, bathrooms, description, listing_images(image_url)')
+      .select('id, title, price, type, location, rooms, bathrooms, size, description, created_at, listing_images(image_url)')
       .eq('id', cleanId)
       .eq('status', 'published')
       .maybeSingle();
@@ -204,22 +214,174 @@ export async function fetchListingForSeo(supabase, listingId) {
 
     const title = [data.title, formattedPrice, BRAND_NAME].filter(Boolean).join(' – ').slice(0, 110);
     const description = [specs, snippet].filter(Boolean).join(' — ').slice(0, 220);
-    const rawImg = data.listing_images?.[0]?.image_url || '';
-    const imageUrl = /^https?:\/\//i.test(rawImg) ? rawImg : '';
+    const imageUrls = (data.listing_images || [])
+      .map((img) => String(img?.image_url || '').trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+    const imageUrl = imageUrls[0] || '';
 
     return {
       id: data.id,
       title,
       shortTitle: data.title || 'Property Details',
       description,
+      fullDescription: String(data.description || '').trim(),
       imageUrl,
+      imageUrls,
       price: Number.isFinite(priceNum) ? priceNum : null,
       type: data.type || 'rent',
-      location: data.location || 'Zimbabwe'
+      location: data.location || 'Zimbabwe',
+      rooms: Number.isFinite(Number(data.rooms)) ? Number(data.rooms) : null,
+      bathrooms: Number.isFinite(Number(data.bathrooms)) ? Number(data.bathrooms) : null,
+      size: data.size || '',
+      createdAt: data.created_at || null
     };
   } catch {
     return null;
   }
+}
+
+export async function fetchPublishedListingsForSsr(supabase, limit = 12) {
+  if (!supabase) return [];
+  try {
+    const queryPromise = supabase
+      .from('listings')
+      .select('id, title, price, type, location, rooms, bathrooms, listing_images(image_url)')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(Math.min(Math.max(1, Number(limit) || 12), 24));
+
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error('timeout') }), 1500)
+    );
+
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+    if (error || !Array.isArray(data)) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+export function injectListingBodySsr(html, listingSeo) {
+  if (typeof html !== 'string' || !listingSeo) return html;
+  const safeTitle = escapeText(listingSeo.shortTitle || listingSeo.title || 'Property Details');
+  const safeLocation = escapeText(listingSeo.location || 'Zimbabwe');
+  const safeDesc = escapeText(listingSeo.fullDescription || listingSeo.description || '');
+  const priceNum = listingSeo.price !== null ? Number(listingSeo.price).toLocaleString('en-US') : '0';
+  const priceHtml = listingSeo.type === 'rent' ? `$${escapeText(priceNum)} <span>/month</span>` : `$${escapeText(priceNum)}`;
+  const roomsText = listingSeo.rooms !== null ? escapeText(listingSeo.rooms) : '-';
+  const bathsText = listingSeo.bathrooms !== null ? escapeText(listingSeo.bathrooms) : '-';
+  const sizeText = listingSeo.size ? escapeText(listingSeo.size) : 'N/A';
+
+  let out = html
+    .replace(/(<span id="listingTitle">)[\s\S]*?(<\/span>)/i, `$1${safeTitle}$2`)
+    .replace(/(<h1 id="propertyTitle">)[\s\S]*?(<\/h1>)/i, `$1${safeTitle}$2`)
+    .replace(/(<span id="propertyLocation">)[\s\S]*?(<\/span>)/i, `$1${safeLocation}$2`)
+    .replace(/(<strong id="bedroomCount">)[\s\S]*?(<\/strong>)/i, `$1${roomsText}$2`)
+    .replace(/(<strong id="bathroomCount">)[\s\S]*?(<\/strong>)/i, `$1${bathsText}$2`)
+    .replace(/(<strong id="propertySize">)[\s\S]*?(<\/strong>)/i, `$1${sizeText}$2`)
+    .replace(/(<p id="propertyDescription">)[\s\S]*?(<\/p>)/i, `$1${safeDesc}$2`)
+    .replace(/(<div class="listing-price-large">)[\s\S]*?(<\/div>)/i, `$1${priceHtml}$2`);
+
+  if (listingSeo.imageUrl) {
+    const safeImg = escapeAttr(listingSeo.imageUrl);
+    out = out.replace(
+      /(<div class="gallery-main">)[\s\S]*?(<\/div>)/i,
+      `$1<img src="${safeImg}" alt="${escapeAttr(`${listingSeo.shortTitle || 'Zimbabwe property'} in ${listingSeo.location || 'Zimbabwe'}`)}" width="800" height="500" fetchpriority="high">$2`
+    );
+  }
+  return out;
+}
+
+export function injectListingsDirectorySsr(html, listings = []) {
+  if (typeof html !== 'string' || !Array.isArray(listings) || listings.length === 0) return html;
+  const gridMarker = '<div class="listings-grid" id="listingsGrid">';
+  const startIdx = html.indexOf(gridMarker);
+  if (startIdx === -1) return html;
+
+  const endMarker = '</div>\n\n        <div class="empty-state"';
+  const endIdx = html.indexOf(endMarker, startIdx);
+  if (endIdx === -1) return html;
+
+  const cardsHtml = listings
+    .filter((item) => item && item.id)
+    .map((item) => {
+      const safeTitle = escapeText(item.title || 'Zimbabwe Property');
+      const safeLoc = escapeText(item.location || 'Zimbabwe');
+      const priceVal = Number(item.price || 0).toLocaleString('en-US');
+      const suffix = item.type === 'rent' ? '/month' : '';
+      const rawImg = item.listing_images?.[0]?.image_url || '';
+      const imgHtml = /^https?:\/\//i.test(rawImg)
+        ? `<img src="${escapeAttr(rawImg)}" alt="${escapeAttr(`${item.title || 'Property'} in ${item.location || 'Zimbabwe'}`)}" width="400" height="250" loading="lazy">`
+        : `<div class="property-image-placeholder"><i class="ri-home-4-line"></i></div>`;
+      return `
+          <article class="card property-card">
+            <a href="/listing.html?id=${encodeURIComponent(item.id)}" style="text-decoration: none; color: inherit; display: block;">
+              <div class="property-image">${imgHtml}</div>
+              <div class="property-body">
+                <div class="property-price">$${escapeText(priceVal)}${suffix ? `<span>${suffix}</span>` : ''}</div>
+                <h2 class="property-title">${safeTitle}</h2>
+                <p class="property-location"><i class="ri-map-pin-line"></i> ${safeLoc}</p>
+              </div>
+            </a>
+          </article>`;
+    })
+    .join('\n');
+
+  if (!cardsHtml.trim()) return html;
+  return `${html.slice(0, startIdx + gridMarker.length)}\n${cardsHtml}\n        ${html.slice(endIdx)}`;
+}
+
+export function build404Html({
+  origin = '',
+  title = 'Page Not Found – Nortava Real Estate',
+  message = 'The page or property listing you are looking for could not be found.'
+} = {}) {
+  const cleanOrigin = String(origin || '').replace(/\/+$/, '');
+  const logoSrc = cleanOrigin ? `${cleanOrigin}${DEFAULT_LOGO_PATH}` : DEFAULT_LOGO_PATH;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>${escapeText(title)}</title>
+  <link rel="icon" type="image/png" href="${escapeAttr(logoSrc)}">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="/assets/images/logo/nortava-logo.jpg" alt="Nortava Real Estate Zimbabwe logo" width="44" height="44">
+        <span>Nortava</span>
+      </a>
+      <nav class="nav">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/listings.html" class="nav-link">Listings</a></li>
+          <li><a href="/how-it-works.html" class="nav-link">How It Works</a></li>
+          <li><a href="/about.html" class="nav-link">About</a></li>
+          <li><a href="/contact.html" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main style="padding: 8rem 0 5rem; min-height: 75vh; display: flex; align-items: center;">
+    <div class="container" style="max-width: 640px; text-align: center;">
+      <div class="card" style="padding: 3rem 2rem;">
+        <p style="font-size: 3rem; font-weight: 800; color: var(--primary); margin: 0 0 0.5rem;">404</p>
+        <h1 style="margin: 0 0 0.75rem;">${escapeText(title.replace(/\s*[–-]\s*Nortava.*$/i, ''))}</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1.75rem;">${escapeText(message)}</p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+          <a href="/" class="btn btn-secondary">Back to Home</a>
+          <a href="/listings.html" class="btn btn-primary">Browse Zimbabwe Listings</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>`;
 }
 
 export async function buildSitemapXml(origin = '', supabase = null) {
@@ -281,7 +443,9 @@ export async function buildSitemapXml(origin = '', supabase = null) {
 
 export function buildRobotsTxt(origin = '') {
   const cleanOrigin = String(origin || '').replace(/\/+$/, '');
+  const verificationToken = resolveGoogleVerificationToken();
   const lines = [
+    `# google-site-verification=${verificationToken}`,
     'User-agent: *',
     'Allow: /',
     'Disallow: /admin/',
@@ -324,7 +488,10 @@ function buildPageStructuredData({ cleanOrigin, cleanPath, canonicalUrl, pageTit
             name: BRAND_NAME,
             url: baseOrigin,
             logo: logoUrl,
-            areaServed: { '@type': 'Country', name: 'Zimbabwe' }
+            telephone: '+263789707745',
+            email: 'nortava@gmail.com',
+            areaServed: { '@type': 'Country', name: 'Zimbabwe' },
+            address: { '@type': 'PostalAddress', addressLocality: 'Norton', addressCountry: 'ZW' }
           }
         },
         {
@@ -347,8 +514,15 @@ function buildPageStructuredData({ cleanOrigin, cleanPath, canonicalUrl, pageTit
       logo: logoUrl,
       image: ogImageUrl,
       description: DEFAULT_DESCRIPTION,
+      telephone: '+263789707745',
+      email: 'nortava@gmail.com',
       areaServed: { '@type': 'Country', name: 'Zimbabwe' },
-      address: { '@type': 'PostalAddress', addressCountry: 'ZW' }
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Norton',
+        addressRegion: 'Mashonaland West',
+        addressCountry: 'ZW'
+      }
     },
     {
       '@type': 'WebApplication',
@@ -518,8 +692,7 @@ export function injectSocialMetaTags(html, { origin = '', pathname = '/', listin
   const logoUrl = normalizeHttpImageUrl(DEFAULT_LOGO_PATH, cleanOrigin);
   const isDefaultCard = !listingSeo?.imageUrl;
 
-  const googleSiteVerification = String(process.env.GOOGLE_SITE_VERIFICATION || '').trim();
-  const safeGoogleVerification = /^[a-zA-Z0-9_-]{10,128}$/.test(googleSiteVerification) ? googleSiteVerification : '';
+  const safeGoogleVerification = resolveGoogleVerificationToken();
 
   let cleanedHtml = html
     .replace(/<meta\s+[^>]*property=["']og:[^"']+["'][^>]*>\s*/gi, '')

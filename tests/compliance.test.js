@@ -13,8 +13,18 @@ import {
   validateMarketingSend
 } from '../server/emailCompliance.js';
 import { createApp } from '../server.js';
-import { resolvePublicAppOrigin } from '../server/security.js';
-import { injectSocialMetaTags } from '../server/seoMetadata.js';
+import {
+  resolvePublicAppOrigin,
+  isValidEmail,
+  timingSafeEqualStrings,
+  sanitizePrototypePollution,
+  extractBearerToken
+} from '../server/security.js';
+import {
+  injectSocialMetaTags,
+  injectListingBodySsr,
+  injectListingsDirectorySsr
+} from '../server/seoMetadata.js';
 import { escapeHtml, safeUrl, safeImageUrl, sanitizePhone } from '../core/utils/sanitize.js';
 import { calculateRecommendedPrice } from '../core/pricing/pricing.js';
 import { getNeighborhoodInfo } from '../core/neighborhoods/neighborhoods.js';
@@ -414,7 +424,8 @@ test('Repository Static Security & Font Self-Hosting Audit', () => {
     { name: 'fonts.gstatic.com', regex: /fonts\.gstatic\.com/i },
     { name: 'hardcoded password', regex: /Br@@115/ },
     { name: 'hardcoded admin email', regex: /douglasnkowo3036@gmail\.com/i },
-    { name: 'sample listing link', regex: /\?id=sample|listing=sample|Sample Property|\(Sample\)/i }
+    { name: 'sample listing link', regex: /\?id=sample|listing=sample|Sample Property|\(Sample\)/i },
+    { name: 'Math.random usage', regex: /\bMath\.random\b/ }
   ];
 
   const ignoredDirs = new Set(['node_modules', 'dist', '.git', 'tests']);
@@ -758,10 +769,12 @@ test('Tariro AI Property Finder: filters live Zimbabwe listings by province/city
   );
 });
 
-test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Canonical, and Schema.org JSON-LD across pages', async () => {
+test('Social Media Metadata & Google SEO: injects OpenGraph/Schema.org, handles canonical redirects, SSR, and real 404s', async () => {
   assert.equal(fs.existsSync(path.join(ROOT, 'assets/images/nortava-og-card.jpg')), true);
   assert.equal(fs.existsSync(path.join(ROOT, 'assets/images/logo/nortava-logo.png')), true);
 
+  const prevAllowed = process.env.ALLOWED_HOSTS;
+  process.env.ALLOWED_HOSTS = 'nortava-share.example.com';
   const { server, baseUrl } = await startTestServer();
   try {
     const headers = {
@@ -772,9 +785,11 @@ test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Ca
     for (const reqPath of ['/', '/listings.html', '/faq.html', '/how-it-works.html', '/safety.html', '/legal/privacy.html']) {
       const res = await fetch(`${baseUrl}${reqPath}`, { headers });
       assert.equal(res.status, 200, `Expected 200 for ${reqPath}`);
+      assert.match(res.headers.get('vary') || '', /Host/i);
       const html = await res.text();
 
       assert.match(html, /<meta name="robots" content="index, follow, max-image-preview:large/);
+      assert.match(html, /<meta name="google-site-verification" content="4aCMJuKR4l8mPFePSPdcX8kGYdonI_o4O4Uek2RSIiw">/);
       assert.match(html, /<meta property="og:site_name" content="Nortava Real Estate">/);
       assert.match(html, /<meta property="og:image" content="https:\/\/nortava-share\.example\.com\/assets\/images\/nortava-og-card\.jpg">/);
       assert.match(html, /<meta property="og:image:secure_url" content="https:\/\/nortava-share\.example\.com\/assets\/images\/nortava-og-card\.jpg">/);
@@ -795,6 +810,24 @@ test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Ca
       if (reqPath === '/how-it-works.html') assert.equal(types.has('HowTo'), true);
     }
 
+    // One URL per page: /index.html permanently redirects 301 to /
+    const redirRes = await fetch(`${baseUrl}/index.html?utm_source=test`, { headers, redirect: 'manual' });
+    assert.equal(redirRes.status, 301);
+    assert.equal(redirRes.headers.get('location'), '/?utm_source=test');
+
+    // Real HTTP 404s for missing pages, missing listing IDs, and unknown routes
+    for (const notFoundPath of ['/nonexistent-page.html', '/does-not-exist', '/listing.html', '/listing.html?id=sample']) {
+      const nfRes = await fetch(`${baseUrl}${notFoundPath}`, { headers });
+      assert.equal(nfRes.status, 404, `Expected 404 for ${notFoundPath}`);
+      assert.equal(nfRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+    }
+
+    // Compact dropdown filter toolbar markup on /listings.html
+    const listingsHtml = await (await fetch(`${baseUrl}/listings.html`, { headers })).text();
+    assert.match(listingsHtml, /id="dropdownLocationBtn"/);
+    assert.match(listingsHtml, /id="dropdownPriceBtn"/);
+    assert.match(listingsHtml, /id="dropdownFiltersBtn"/);
+
     // Auth / admin / dashboard pages must be marked noindex, nofollow
     for (const privatePath of ['/auth/login.html', '/admin/index.html']) {
       const privRes = await fetch(`${baseUrl}${privatePath}`, { headers });
@@ -806,9 +839,22 @@ test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Ca
     const robotsRes = await fetch(`${baseUrl}/robots.txt`, { headers });
     assert.equal(robotsRes.status, 200);
     const robotsTxt = await robotsRes.text();
+    assert.match(robotsTxt, /# google-site-verification=4aCMJuKR4l8mPFePSPdcX8kGYdonI_o4O4Uek2RSIiw/);
     assert.match(robotsTxt, /Allow:\s*\//);
     assert.match(robotsTxt, /Disallow:\s*\/admin\//);
     assert.match(robotsTxt, /Sitemap:\s*https:\/\/nortava-share\.example\.com\/sitemap\.xml/);
+
+    for (const txtPath of ['/google-site-verification.txt', '/.well-known/google-site-verification.txt']) {
+      const txtRes = await fetch(`${baseUrl}${txtPath}`, { headers });
+      assert.equal(txtRes.status, 200);
+      assert.match(txtRes.headers.get('content-type') || '', /text\/plain/);
+      assert.equal((await txtRes.text()).trim(), 'google-site-verification=4aCMJuKR4l8mPFePSPdcX8kGYdonI_o4O4Uek2RSIiw');
+    }
+
+    const htmlVerifyRes = await fetch(`${baseUrl}/google6a7d612c835742de.html`, { headers });
+    assert.equal(htmlVerifyRes.status, 200);
+    assert.match(htmlVerifyRes.headers.get('content-type') || '', /text\/html/);
+    assert.equal((await htmlVerifyRes.text()).trim(), 'google-site-verification: google6a7d612c835742de.html');
 
     const sitemapRes = await fetch(`${baseUrl}/sitemap.xml`, { headers });
     assert.equal(sitemapRes.status, 200);
@@ -822,8 +868,43 @@ test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Ca
     const favRes = await fetch(`${baseUrl}/favicon.ico`);
     assert.equal(favRes.status, 200);
   } finally {
+    if (prevAllowed === undefined) delete process.env.ALLOWED_HOSTS;
+    else process.env.ALLOWED_HOSTS = prevAllowed;
     await new Promise(resolve => server.close(resolve));
   }
+
+  // Verify SSR hydration injects real listing & listings directory HTML cleanly
+  const rawListingHtml = fs.readFileSync(path.join(ROOT, 'listing.html'), 'utf8');
+  const hydratedListing = injectListingBodySsr(rawListingHtml, {
+    id: 'prop-123',
+    title: '3 Bed Knowe Home – $380/mo – Nortava Real Estate',
+    shortTitle: '3 Bed Knowe Home',
+    description: 'For Rent in Knowe, Norton',
+    fullDescription: 'Spacious family home with borehole water in Knowe.',
+    imageUrl: 'https://cdn.example.com/knowe.jpg',
+    price: 380,
+    type: 'rent',
+    location: 'Knowe, Norton, Mashonaland West',
+    rooms: 3,
+    bathrooms: 2,
+    size: '400 sqm'
+  });
+  assert.match(hydratedListing, /<h1 id="propertyTitle">3 Bed Knowe Home<\/h1>/);
+  assert.match(hydratedListing, /Spacious family home with borehole water in Knowe\./);
+  assert.match(hydratedListing, /alt="3 Bed Knowe Home in Knowe, Norton, Mashonaland West"/);
+
+  const rawListingsHtml = fs.readFileSync(path.join(ROOT, 'listings.html'), 'utf8');
+  const hydratedDir = injectListingsDirectorySsr(rawListingsHtml, [
+    {
+      id: 'prop-123',
+      title: '3 Bed Knowe Home',
+      price: 380,
+      type: 'rent',
+      location: 'Knowe, Norton, Mashonaland West',
+      listing_images: [{ image_url: 'https://cdn.example.com/knowe.jpg' }]
+    }
+  ]);
+  assert.match(hydratedDir, /href="\/listing\.html\?id=prop-123"/);
 
   // Verify XSS payloads inside listing metadata are neutralized in attributes and JSON-LD
   const maliciousHtml = injectSocialMetaTags('<html><head><title>X</title></head><body></body></html>', {
@@ -843,6 +924,47 @@ test('Social Media Metadata: injects absolute OpenGraph, Twitter Cards, Logo, Ca
   assert.match(maliciousHtml, /&lt;\/script&gt;/);
   assert.match(maliciousHtml, /\\u003c\/script>/);
 });
+
+test('Pen-Test Hardening PoCs: blocks cache poisoning, Unicode homographs, prototype pollution, alg:none JWT, and RLS view bypass', async () => {
+  // 1. Cache poisoning / spoofed Origin & unallowlisted X-Forwarded-Host must never leak into canonicals or redirects
+  const spoofedReq = {
+    protocol: 'http',
+    get(h) {
+      const key = h.toLowerCase();
+      if (key === 'origin') return 'https://evil-attacker.com';
+      if (key === 'referer') return 'https://evil-attacker.com/login';
+      if (key === 'x-forwarded-host') return 'evil-attacker.com';
+      if (key === 'host') return 'evil-attacker.com';
+      return '';
+    }
+  };
+  assert.equal(resolvePublicAppOrigin(spoofedReq).includes('evil-attacker.com'), false);
+
+  // 2. Unicode homograph spoofing (Cyrillic "а" in domain/local part) rejected cleanly
+  assert.equal(isValidEmail('admin@nortava.co.zw'), true);
+  assert.equal(isValidEmail('admin@nortav\u0430.co.zw'), false);
+  assert.equal(isValidEmail(`${'a'.repeat(65)}@example.com`), false);
+
+  // 3. JWT alg:none or malformed tokens fail closed before upstream auth check
+  assert.equal(extractBearerToken({ headers: { authorization: 'Bearer eyJhbGciOiJub25lIn0.eyJyb2xlIjoiYWRtaW4ifQ.' } }), null);
+  assert.equal(extractBearerToken({ headers: { authorization: 'Bearer not-a-jwt' } }), null);
+
+  // 4. Prototype pollution keys scrubbed from nested objects
+  const polluted = JSON.parse('{"name":"Test","__proto__":{"isAdmin":true},"nested":{"constructor":{"prototype":{"pwned":true}},"ok":1}}');
+  const scrubbed = sanitizePrototypePollution(polluted);
+  assert.equal(Object.prototype.hasOwnProperty.call(scrubbed, '__proto__'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(scrubbed.nested, 'constructor'), false);
+  assert.equal(scrubbed.nested.ok, 1);
+
+  // 5. Timing-safe string equality handles mismatched lengths safely
+  assert.equal(timingSafeEqualStrings('admin@nortava.co.zw', 'admin@nortava.co.zw'), true);
+  assert.equal(timingSafeEqualStrings('admin@nortava.co.zw', 'short'), false);
+
+  // 6. public_profiles SQL view enforces security_invoker = true so users RLS is never bypassed
+  const schemaSql = fs.readFileSync(path.join(ROOT, 'supabase_schema.sql'), 'utf8');
+  assert.match(schemaSql, /CREATE OR REPLACE VIEW public_profiles[\s\S]*security_invoker\s*=\s*true/i);
+});
+
 
 
 

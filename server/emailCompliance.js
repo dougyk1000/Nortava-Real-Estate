@@ -15,7 +15,11 @@ function getSigningSecret() {
 const localSuppressionSet = new Set();
 
 export function normalizeEmail(email) {
-  return String(email || '').trim().toLowerCase();
+  return String(email || '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
+    .toLowerCase();
 }
 
 export function createUnsubscribeToken(email) {
@@ -30,10 +34,9 @@ export function verifyUnsubscribeToken(email, token) {
   const normalized = normalizeEmail(email);
   if (!normalized || !token || typeof token !== 'string') return false;
   const expected = createUnsubscribeToken(normalized);
-  const expectedBuf = Buffer.from(expected, 'utf8');
-  const providedBuf = Buffer.from(token.trim(), 'utf8');
-  if (expectedBuf.length !== providedBuf.length) return false;
-  return crypto.timingSafeEqual(expectedBuf, providedBuf);
+  const expectedDigest = crypto.createHash('sha256').update(expected, 'utf8').digest();
+  const providedDigest = crypto.createHash('sha256').update(token.trim(), 'utf8').digest();
+  return crypto.timingSafeEqual(expectedDigest, providedDigest);
 }
 
 export async function suppressEmail(email, supabaseClient = null) {

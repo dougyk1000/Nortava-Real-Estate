@@ -238,7 +238,7 @@
   <header class="header">
     <div class="container header-inner">
       <a href="/" class="logo">
-        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava">
+        <img src="assets/images/logo/nortava-logo.jpg" alt="Nortava Real Estate Zimbabwe logo" width="44" height="44">
         <span>Nortava</span>
       </a>
       <nav class="nav">
@@ -262,6 +262,21 @@
       </button>
     </div>
   </header>
+
+  <nav class="mobile-nav">
+    <button class="mobile-nav-close" aria-label="Close menu"><i class="ri-close-line"></i></button>
+    <ul class="mobile-nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="listings.html" class="nav-link">Listings</a></li>
+      <li><a href="how-it-works.html" class="nav-link">How It Works</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="contact.html" class="nav-link">Contact</a></li>
+    </ul>
+    <div class="mobile-nav-actions">
+      <a href="auth/login.html" class="btn btn-secondary btn-lg">Login</a>
+      <a href="auth/register.html" class="btn btn-primary btn-lg">Get Started</a>
+    </div>
+  </nav>
 
   <main class="listing-detail">
     <div class="container">
@@ -451,7 +466,7 @@
   <div class="gallery-modal" id="galleryModal">
     <button class="gallery-close" onclick="closeGallery()"><i class="ri-close-line"></i></button>
     <button class="gallery-nav prev" onclick="prevImage()"><i class="ri-arrow-left-s-line"></i></button>
-    <img id="galleryImage" src="" alt="">
+    <img id="galleryImage" src="" alt="Property photo preview">
     <button class="gallery-nav next" onclick="nextImage()"><i class="ri-arrow-right-s-line"></i></button>
   </div>
 
@@ -634,15 +649,16 @@
     function renderGallery() {
       const gallery = document.getElementById('listingGallery');
       if (listingImages.length === 0) return;
+      const propertyName = document.getElementById('propertyTitle')?.textContent?.trim() || 'Zimbabwe property';
 
       gallery.innerHTML = `
         <div class="gallery-main" onclick="openGallery(0)" style="cursor: pointer;">
-          <img src="${escapeHtml(listingImages[0])}" alt="Property main">
+          <img src="${escapeHtml(listingImages[0])}" alt="${escapeHtml(propertyName)} – main photo" width="800" height="500">
         </div>
         <div class="gallery-side">
           ${listingImages.slice(1, 3).map((img, i) => `
             <div class="gallery-thumb" onclick="openGallery(${i + 1})" style="cursor: pointer;">
-              <img src="${escapeHtml(img)}" alt="Property ${i + 2}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="${escapeHtml(img)}" alt="${escapeHtml(propertyName)} – photo ${i + 2}" width="400" height="245" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
           `).join('')}
           ${listingImages.length <= 1 ? '<div class="gallery-thumb"><i class="ri-image-line" style="font-size: 2rem;"></i></div>'.repeat(2 - listingImages.slice(1).length) : ''}
@@ -650,10 +666,18 @@
       `;
     }
 
+    function updateGalleryModalImage() {
+      const imgEl = document.getElementById('galleryImage');
+      const propertyName = document.getElementById('propertyTitle')?.textContent?.trim() || 'Zimbabwe property';
+      if (!imgEl || listingImages.length === 0) return;
+      imgEl.src = listingImages[currentImageIndex];
+      imgEl.alt = `${propertyName} – photo ${currentImageIndex + 1} of ${listingImages.length}`;
+    }
+
     window.openGallery = function(index) {
       if (listingImages.length === 0) return;
       currentImageIndex = index;
-      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+      updateGalleryModalImage();
       document.getElementById('galleryModal').classList.add('active');
     };
 
@@ -663,12 +687,12 @@
 
     window.prevImage = function() {
       currentImageIndex = (currentImageIndex - 1 + listingImages.length) % listingImages.length;
-      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+      updateGalleryModalImage();
     };
 
     window.nextImage = function() {
       currentImageIndex = (currentImageIndex + 1) % listingImages.length;
-      document.getElementById('galleryImage').src = listingImages[currentImageIndex];
+      updateGalleryModalImage();
     };
 
     document.getElementById('galleryModal')?.addEventListener('click', (e) => {

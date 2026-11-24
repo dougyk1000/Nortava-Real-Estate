@@ -27,8 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initLocationHierarchy();
   applyUrlFilters();
   renderBreadcrumbBar();
+  updateFilterToolbarSummaries();
   renderDirectoryPanel();
   loadListings(getCurrentFilters());
+  setupDropdownPopovers();
   setupFilters();
   setupDirectoryPanel();
   setupRealtimeUpdates();
@@ -164,6 +166,7 @@ function setLocationHierarchy({ province = '', city = '', zone = '', area = '' }
 
   renderBreadcrumbBar();
   renderDirectoryPanel();
+  updateFilterToolbarSummaries();
 }
 
 function applyUrlFilters() {
@@ -198,6 +201,7 @@ function applyUrlFilters() {
   if (type && document.getElementById('filterType')) document.getElementById('filterType').value = type;
   if (maxPrice && document.getElementById('filterMaxPrice')) document.getElementById('filterMaxPrice').value = maxPrice;
   if (rooms && document.getElementById('filterRooms')) document.getElementById('filterRooms').value = rooms;
+  updateFilterToolbarSummaries();
 }
 
 function renderBreadcrumbBar() {
@@ -209,6 +213,13 @@ function renderBreadcrumbBar() {
   const zone = document.getElementById('filterZone')?.value || '';
   const area = document.getElementById('filterArea')?.value || '';
 
+  if (!province && !city && !zone && !area) {
+    bar.style.display = 'none';
+    bar.innerHTML = '';
+    return;
+  }
+
+  bar.style.display = 'flex';
   const crumbs = [
     { label: 'Zimbabwe (All)', level: 'root' }
   ];
@@ -217,11 +228,11 @@ function renderBreadcrumbBar() {
   if (zone) crumbs.push({ label: zone, level: 'zone' });
   if (area) crumbs.push({ label: area, level: 'area' });
 
-  bar.innerHTML = `<span style="font-weight: 600; color: var(--text-primary);"><i class="ri-map-pin-range-line" style="color: var(--primary);"></i> Region:</span> ` +
+  bar.innerHTML = `<span style="font-weight: 600; color: var(--text-primary);"><i class="ri-map-pin-range-line" style="color: var(--primary);"></i> Area:</span> ` +
     crumbs.map((c, idx) => {
       const isLast = idx === crumbs.length - 1;
       const sep = idx > 0 ? '<i class="ri-arrow-right-s-line" style="color: var(--text-tertiary);"></i>' : '';
-      return `${sep}<button type="button" class="btn btn-sm ${isLast ? 'btn-primary' : 'btn-ghost'}" data-crumb-level="${c.level}" style="padding: 0.25rem 0.65rem; font-size: 0.82rem;">${escapeHtml(c.label)}</button>`;
+      return `${sep}<button type="button" class="btn btn-sm ${isLast ? 'btn-primary' : 'btn-ghost'}" data-crumb-level="${c.level}" style="padding: 0.2rem 0.55rem; font-size: 0.8rem;">${escapeHtml(c.label)}</button>`;
     }).join(' ');
 
   bar.querySelectorAll('[data-crumb-level]').forEach(btn => {
@@ -233,6 +244,135 @@ function renderBreadcrumbBar() {
       else if (level === 'zone') setLocationHierarchy({ province, city, zone });
       loadListings(getCurrentFilters());
     });
+  });
+}
+
+function closeAllDropdownPopovers() {
+  document.querySelectorAll('.filter-popover.open').forEach(pop => pop.classList.remove('open'));
+  document.querySelectorAll('.filter-dropdown-trigger[aria-expanded="true"]').forEach(btn => {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function updateFilterToolbarSummaries() {
+  const province = document.getElementById('filterProvince')?.value || '';
+  const city = document.getElementById('filterCity')?.value || '';
+  const zone = document.getElementById('filterZone')?.value || '';
+  const area = document.getElementById('filterArea')?.value || '';
+  const keyword = document.getElementById('filterLocation')?.value?.trim() || '';
+  const type = document.getElementById('filterType')?.value || '';
+  const minPrice = document.getElementById('filterMinPrice')?.value || '';
+  const maxPrice = document.getElementById('filterMaxPrice')?.value || '';
+  const rooms = document.getElementById('filterRooms')?.value || '';
+  const bathrooms = document.getElementById('filterBathrooms')?.value || '';
+  const amenityIds = ['filterFurnished', 'filterWater', 'filterElectricity', 'filterParking'];
+  const activeAmenities = amenityIds.filter(id => document.getElementById(id)?.checked).length;
+
+  const locLabelEl = document.getElementById('dropdownLocationLabel');
+  const locBtn = document.getElementById('dropdownLocationBtn');
+  const locParts = [area || zone, city || province].filter(Boolean);
+  if (locLabelEl) {
+    locLabelEl.textContent = locParts.length ? locParts.join(', ') : 'Location';
+  }
+  locBtn?.classList.toggle('active', Boolean(province || city || zone || area));
+
+  const priceLabelEl = document.getElementById('dropdownPriceLabel');
+  const priceBtn = document.getElementById('dropdownPriceBtn');
+  const typeText = type === 'rent' ? 'Rent' : (type === 'sale' ? 'Buy' : '');
+  let budgetText = '';
+  if (minPrice && maxPrice) budgetText = `$${minPrice}–$${maxPrice}`;
+  else if (maxPrice) budgetText = `≤ $${maxPrice}`;
+  else if (minPrice) budgetText = `≥ $${minPrice}`;
+  const priceSummary = [typeText, budgetText].filter(Boolean).join(' · ');
+  if (priceLabelEl) {
+    priceLabelEl.textContent = priceSummary || 'Type & Price';
+  }
+  priceBtn?.classList.toggle('active', Boolean(type || minPrice || maxPrice));
+
+  document.querySelectorAll('.price-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', Boolean(maxPrice) && btn.dataset.maxPrice === String(maxPrice) && !minPrice);
+  });
+
+  const featureCount = (rooms ? 1 : 0) + (bathrooms ? 1 : 0) + activeAmenities;
+  const badgeEl = document.getElementById('filterCountBadge');
+  const featuresBtn = document.getElementById('dropdownFiltersBtn');
+  if (badgeEl) {
+    badgeEl.textContent = String(featureCount);
+    badgeEl.style.display = featureCount > 0 ? 'inline-flex' : 'none';
+  }
+  featuresBtn?.classList.toggle('active', featureCount > 0);
+
+  const hasAnyFilter = Boolean(
+    province || city || zone || area || keyword || type || minPrice || maxPrice || featureCount > 0
+  );
+  const clearBtn = document.getElementById('clearFiltersBtn');
+  if (clearBtn) {
+    clearBtn.style.display = hasAnyFilter ? 'inline-flex' : 'none';
+  }
+}
+
+function setupDropdownPopovers() {
+  const wraps = document.querySelectorAll('.filter-dropdown-wrap');
+  wraps.forEach(wrap => {
+    const trigger = wrap.querySelector('.filter-dropdown-trigger');
+    const popover = wrap.querySelector('.filter-popover');
+    if (!trigger || !popover) return;
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = !popover.classList.contains('open');
+      closeAllDropdownPopovers();
+      if (willOpen) {
+        popover.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    popover.addEventListener('click', (e) => e.stopPropagation());
+    popover.querySelectorAll('.filter-popover-close, .filter-popover-done').forEach(btn => {
+      btn.addEventListener('click', () => closeAllDropdownPopovers());
+    });
+  });
+
+  document.querySelectorAll('[data-reset-popover]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.resetPopover;
+      if (target === 'location') {
+        setLocationHierarchy({});
+      } else if (target === 'price') {
+        ['filterType', 'filterMinPrice', 'filterMaxPrice'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+      } else if (target === 'features') {
+        ['filterRooms', 'filterBathrooms'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        ['filterFurnished', 'filterWater', 'filterElectricity', 'filterParking'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.checked = false;
+        });
+      }
+      updateFilterToolbarSummaries();
+      loadListings(getCurrentFilters());
+    });
+  });
+
+  document.querySelectorAll('.price-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const maxEl = document.getElementById('filterMaxPrice');
+      const minEl = document.getElementById('filterMinPrice');
+      if (minEl) minEl.value = '';
+      if (maxEl) maxEl.value = btn.dataset.maxPrice || '';
+      updateFilterToolbarSummaries();
+      loadListings(getCurrentFilters());
+    });
+  });
+
+  document.addEventListener('click', () => closeAllDropdownPopovers());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllDropdownPopovers();
   });
 }
 
@@ -424,7 +564,7 @@ async function loadListings(filters = {}) {
   const emptyState = document.getElementById('emptyState');
   if (!grid) return;
 
-  grid.innerHTML = '<div class="skeleton skeleton-image" style="height: 300px;"></div>'.repeat(3);
+  grid.innerHTML = '<div class="skeleton skeleton-listing-card"></div>'.repeat(3);
   if (emptyState) emptyState.style.display = 'none';
 
   const [{ data: listings, error }] = await Promise.all([
@@ -469,14 +609,15 @@ function createListingCard(listing) {
     ? escapeHtml(listing.users.verification_tier)
     : '';
   const isSaved = savedListingIds.has(listing.id);
+  const imgAlt = `${safeTitle} property in ${locationDisplay || 'Zimbabwe'}`;
 
   return `
     <div class="card property-card" data-listing-id="${escapeHtml(listing.id)}">
       <div class="property-image">
         ${image
-          ? `<img src="${escapeHtml(image)}" alt="${safeTitle}" loading="lazy">`
-          : `<div style="width: 100%; height: 200px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
-              <i class="ri-image-line" style="font-size: 2rem;"></i>
+          ? `<img src="${escapeHtml(image)}" alt="${imgAlt}" width="400" height="250" loading="lazy">`
+          : `<div class="property-image-placeholder">
+              <i class="ri-image-line"></i>
             </div>`
         }
         <span class="property-badge ${badgeClass}">${badgeText}</span>
@@ -556,20 +697,42 @@ function setupFilters() {
   });
 
   document.getElementById('applyFilters')?.addEventListener('click', () => {
+    updateFilterToolbarSummaries();
+    closeAllDropdownPopovers();
     loadListings(getCurrentFilters());
+  });
+
+  let keywordDebounce = null;
+  document.getElementById('filterLocation')?.addEventListener('input', () => {
+    updateFilterToolbarSummaries();
+    clearTimeout(keywordDebounce);
+    keywordDebounce = setTimeout(() => {
+      loadListings(getCurrentFilters());
+    }, 320);
   });
 
   ['filterLocation', 'filterMinPrice', 'filterMaxPrice'].forEach(id => {
     document.getElementById(id)?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        clearTimeout(keywordDebounce);
+        updateFilterToolbarSummaries();
+        closeAllDropdownPopovers();
         loadListings(getCurrentFilters());
       }
     });
   });
 
+  ['filterMinPrice', 'filterMaxPrice'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      updateFilterToolbarSummaries();
+      loadListings(getCurrentFilters());
+    });
+  });
+
   ['filterType', 'filterRooms', 'filterBathrooms', 'filterFurnished', 'filterWater', 'filterElectricity', 'filterParking'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
+      updateFilterToolbarSummaries();
       loadListings(getCurrentFilters());
     });
   });
@@ -660,9 +823,9 @@ function setupSaveSearch() {
 
 function setupClearFilters() {
   const clearBtn = document.getElementById('clearFiltersBtn');
-  if (!clearBtn) return;
+  const emptyResetBtn = document.getElementById('emptyResetFiltersBtn');
 
-  clearBtn.addEventListener('click', () => {
+  const handleReset = () => {
     setLocationHierarchy({});
     ['filterLocation', 'filterType', 'filterMinPrice', 'filterMaxPrice', 'filterRooms', 'filterBathrooms'].forEach(id => {
       const el = document.getElementById(id);
@@ -673,9 +836,14 @@ function setupClearFilters() {
       if (el) el.checked = false;
     });
 
+    updateFilterToolbarSummaries();
+    closeAllDropdownPopovers();
     loadListings();
     showToast('Cleared', 'All filters have been cleared', 'success');
-  });
+  };
+
+  clearBtn?.addEventListener('click', handleReset);
+  emptyResetBtn?.addEventListener('click', handleReset);
 }
 
 function getCurrentFilters() {

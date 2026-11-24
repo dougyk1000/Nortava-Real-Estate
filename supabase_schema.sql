@@ -16,8 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Public non-PII profile projection (excludes email and phone)
-CREATE OR REPLACE VIEW public_profiles AS
+-- Public non-PII profile projection (excludes email and phone; respects invoker RLS)
+CREATE OR REPLACE VIEW public_profiles
+WITH (security_invoker = true) AS
   SELECT id, name, verified, verification_tier
   FROM users;
 

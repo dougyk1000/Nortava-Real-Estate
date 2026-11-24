@@ -51,7 +51,7 @@ export function validateZimbabweNationalId(raw) {
   if (typeof raw !== 'string') {
     return { valid: false, normalized: '', error: 'Zimbabwe National ID number is required.' };
   }
-  const compact = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const compact = raw.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const match = compact.match(/^(\d{2})(\d{6,7})([A-Z])(\d{2})$/);
   if (!match) {
     return {
@@ -74,10 +74,17 @@ export function validateDocumentUpload(docPayload, label = 'Document') {
     return { valid: false, error: `${label} file data is missing.` };
   }
 
+  const maxEncodedChars = Math.ceil((MAX_KYC_DOC_BYTES * 4) / 3) + 256;
+  if (rawData.length > maxEncodedChars) {
+    return { valid: false, error: `${label} exceeds the 8MB maximum file size.` };
+  }
+
   let base64Part = rawData;
-  const dataUrlMatch = rawData.match(/^data:([^;]+);base64,(.+)$/i);
-  if (dataUrlMatch) {
-    base64Part = dataUrlMatch[2];
+  if (rawData.slice(0, 5).toLowerCase() === 'data:') {
+    const markerIdx = rawData.indexOf(';base64,', 5);
+    if (markerIdx > 5 && markerIdx < 128) {
+      base64Part = rawData.slice(markerIdx + 8);
+    }
   }
 
   // Quick size pre-check before Buffer allocation (~4/3 expansion)
@@ -374,15 +381,25 @@ export async function analyzeLandlordDocumentsWithGemini({
     };
   } catch (err) {
     const status = Number(err?.status || err?.code || 500);
-    if (status === 400 || status === 403) {
+    const rawMsg = String(err?.message || '').replace(/AIza[0-9A-Za-z_-]{15,}/g, '[REDACTED_KEY]');
+    const lower = rawMsg.toLowerCase();
+    const isKeyError =
+      status === 401 ||
+      status === 403 ||
+      lower.includes('api key not valid') ||
+      lower.includes('api_key_invalid') ||
+      lower.includes('permission_denied') ||
+      lower.includes('permission denied');
+
+    if (isKeyError) {
       return {
         ok: false,
         status: 502,
         code: 'GEMINI_KEY_INVALID',
-        error: 'AI document verification key authorization failed. Check GEMINI_API_KEY in Settings > Secrets.'
+        error: `AI document verification key authorization failed (${rawMsg || status}). Check GEMINI_API_KEY in Settings > Secrets.`
       };
     }
-    if (status === 429) {
+    if (status === 429 || lower.includes('quota') || lower.includes('resource_exhausted')) {
       return {
         ok: false,
         status: 429,
@@ -394,7 +411,7 @@ export async function analyzeLandlordDocumentsWithGemini({
       ok: false,
       status: 502,
       code: 'GEMINI_UPSTREAM_ERROR',
-      error: 'Unable to run AI document verification right now.'
+      error: `Unable to run AI document verification right now (${rawMsg || `HTTP ${status}`}).`
     };
   }
 }

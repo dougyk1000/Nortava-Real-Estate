@@ -280,6 +280,89 @@ async function generateWithRetry(ai, params, maxRetries = 2) {
   throw lastError;
 }
 
+function redactPossibleSecrets(text) {
+  return String(text || '').replace(/AIza[0-9A-Za-z_-]{15,}/g, '[REDACTED_KEY]');
+}
+
+function unwrapGeminiErrorMessage(err) {
+  const raw = redactPossibleSecrets(err?.message || '');
+  if (!raw) return '';
+  try {
+    const parsed = JSON.parse(raw);
+    const innerMsg = parsed?.error?.message || parsed?.message;
+    if (innerMsg) return redactPossibleSecrets(innerMsg);
+  } catch {
+    // Plain text message
+  }
+  return raw;
+}
+
+function classifyGeminiError(err) {
+  const status = Number(err?.status || err?.code || 500);
+  const rawMessage = unwrapGeminiErrorMessage(err);
+  const lower = rawMessage.toLowerCase();
+
+  const isFreeTierBillingRequired =
+    lower.includes('free tier is not available for this project') ||
+    lower.includes('set up billing');
+
+  const isKeyFailure =
+    status === 401 ||
+    status === 403 ||
+    lower.includes('api key not valid') ||
+    lower.includes('api_key_invalid') ||
+    lower.includes('permission_denied') ||
+    lower.includes('permission denied') ||
+    lower.includes('invalid authentication');
+
+  if (isFreeTierBillingRequired) {
+    return {
+      ok: false,
+      status: 502,
+      code: 'GEMINI_BILLING_REQUIRED',
+      error: 'Nortava AI cannot reply because the current GEMINI_API_KEY project requires billing / a paid-tier key (Gemini API free tier is unavailable on that project). Update GEMINI_API_KEY in Settings > Secrets with a billed key.'
+    };
+  }
+  if (isKeyFailure) {
+    return {
+      ok: false,
+      status: 502,
+      code: 'GEMINI_KEY_INVALID',
+      error: `AI service key authorization failed (${rawMessage || `HTTP ${status}`}). Please verify GEMINI_API_KEY in Settings > Secrets.`
+    };
+  }
+  if (status === 404 || lower.includes('not_found') || lower.includes('not found')) {
+    return {
+      ok: false,
+      status: 502,
+      code: 'GEMINI_MODEL_NOT_FOUND',
+      error: `AI model "${CHAT_MODEL}" could not be resolved (${rawMessage || '404 Not Found'}).`
+    };
+  }
+  if (status === 429 || lower.includes('resource_exhausted') || lower.includes('quota')) {
+    return {
+      ok: false,
+      status: 429,
+      code: 'GEMINI_RATE_LIMITED',
+      error: 'Nortava AI is busy right now (rate limit or quota reached). Please wait a few seconds and retry.'
+    };
+  }
+  if (status === 400) {
+    return {
+      ok: false,
+      status: 502,
+      code: 'GEMINI_BAD_REQUEST',
+      error: `AI request parameter error (${rawMessage || '400 Bad Request'}).`
+    };
+  }
+  return {
+    ok: false,
+    status: 502,
+    code: 'GEMINI_UPSTREAM_ERROR',
+    error: `Unable to reach the AI assistant right now (${rawMessage || `HTTP ${status}`}). Please try again shortly.`
+  };
+}
+
 export async function handleChatRequest({ message, history = [], context = {}, supabase = null }) {
   const cleanMessage = typeof message === 'string' ? message.trim().slice(0, 2000) : '';
   if (!cleanMessage) {
@@ -330,17 +413,37 @@ export async function handleChatRequest({ message, history = [], context = {}, s
   ];
 
   const tools = [{ functionDeclarations: [searchPropertiesDeclaration, getAreaInfoDeclaration] }];
+  let useThinkingConfig = true;
+
+  const callModel = async (turnContents) => {
+    const config = {
+      systemInstruction,
+      tools,
+      ...(useThinkingConfig ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {})
+    };
+    try {
+      return await generateWithRetry(ai, {
+        model: CHAT_MODEL,
+        contents: turnContents,
+        config
+      });
+    } catch (err) {
+      const status = Number(err?.status || err?.code || 0);
+      const msg = String(err?.message || '').toLowerCase();
+      if (useThinkingConfig && status === 400 && !msg.includes('api key')) {
+        useThinkingConfig = false;
+        return await generateWithRetry(ai, {
+          model: CHAT_MODEL,
+          contents: turnContents,
+          config: { systemInstruction, tools }
+        });
+      }
+      throw err;
+    }
+  };
 
   try {
-    let response = await generateWithRetry(ai, {
-      model: CHAT_MODEL,
-      contents,
-      config: {
-        systemInstruction,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-        tools
-      }
-    });
+    let response = await callModel(contents);
 
     // Execute up to 3 rounds of tool calls cleanly
     let rounds = 0;
@@ -372,15 +475,7 @@ export async function handleChatRequest({ message, history = [], context = {}, s
 
       contents.push({ role: 'user', parts: responseParts });
 
-      response = await generateWithRetry(ai, {
-        model: CHAT_MODEL,
-        contents,
-        config: {
-          systemInstruction,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          tools
-        }
-      });
+      response = await callModel(contents);
     }
 
     const reply = (response.text || '').trim();
@@ -400,28 +495,6 @@ export async function handleChatRequest({ message, history = [], context = {}, s
       model: CHAT_MODEL
     };
   } catch (err) {
-    const status = Number(err?.status || err?.code || 500);
-    if (status === 400 || status === 403) {
-      return {
-        ok: false,
-        status: 502,
-        code: 'GEMINI_KEY_INVALID',
-        error: 'AI service key authorization failed. Please verify GEMINI_API_KEY in Settings > Secrets.'
-      };
-    }
-    if (status === 429) {
-      return {
-        ok: false,
-        status: 429,
-        code: 'GEMINI_RATE_LIMITED',
-        error: 'Nortava AI is busy right now (rate limit reached). Please wait a few seconds and retry.'
-      };
-    }
-    return {
-      ok: false,
-      status: 502,
-      code: 'GEMINI_UPSTREAM_ERROR',
-      error: 'Unable to reach the AI assistant right now. Please try again shortly.'
-    };
+    return classifyGeminiError(err);
   }
 }

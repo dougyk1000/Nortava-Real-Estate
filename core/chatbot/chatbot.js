@@ -150,7 +150,7 @@ function formatBotTextSafely(rawText) {
 
   // Turn internal relative paths including filtered /listings.html?... & /listing.html?id=... into safe clickable links
   html = html.replace(
-    /(^|[\s(>])(\/(?:listing\.html\?id=[A-Za-z0-9_-]+|listings\.html(?:\?[A-Za-z0-9_=&%+.+-]+)?|safety\.html|report\.html|contact\.html|faq\.html|how-it-works\.html|about\.html|auth\/(?:login|register)\.html|dashboard\/landlord-add\.html|legal\/(?:terms|privacy|cookies|dmca)\.html))/g,
+    /(^|[\s(>])(\/(?:listing\.html\?id=[A-Za-z0-9_-]+|listings\.html(?:\?[A-Za-z0-9_=&%+.-]+)?|safety\.html|report\.html|contact\.html|faq\.html|how-it-works\.html|about\.html|auth\/(?:login|register)\.html|dashboard\/landlord-add\.html|legal\/(?:terms|privacy|cookies|dmca)\.html))/g,
     (_, prefix, safePath) => `${prefix}<a href="${safePath}" style="color: var(--primary); text-decoration: underline; font-weight: 500;">${safePath}</a>`
   );
 

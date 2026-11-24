@@ -14,12 +14,15 @@ import {
   createPublicServerSupabase,
   createAdminServerSupabase,
   createAuthedServerSupabase,
+  getAdminEmails,
   verifyAuthenticatedUser,
   verifyAdminRequest,
   sanitizeText,
   isValidEmail,
   resolvePublicAppOrigin,
-  securityHeadersMiddleware
+  securityHeadersMiddleware,
+  stripPrototypePollutionMiddleware,
+  createRateLimiter
 } from './server/security.js';
 import { handleChatRequest } from './server/aiAssistant.js';
 import {
@@ -33,10 +36,15 @@ import {
 } from './server/landlordVerification.js';
 import {
   fetchListingForSeo,
+  fetchPublishedListingsForSsr,
+  injectListingBodySsr,
+  injectListingsDirectorySsr,
   injectSocialMetaTags,
   buildSitemapXml,
   buildRobotsTxt,
-  isNoIndexPath
+  build404Html,
+  isNoIndexPath,
+  resolveGoogleVerificationToken
 } from './server/seoMetadata.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -124,22 +132,98 @@ async function fetchVerificationForUser(adminClient, userId) {
   return null;
 }
 
+export function registerNotFoundHandler(app) {
+  app.use((req, res) => {
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found.' });
+    }
+    const origin = resolvePublicAppOrigin(req);
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method === 'HEAD') {
+      return res.status(404).type('html').end();
+    }
+    return res.status(404).type('html').send(build404Html({ origin }));
+  });
+}
+
 export function createApp(options = {}) {
-  const { isProd = process.env.NODE_ENV === 'production', getVite = () => null } = options;
+  const {
+    isProd = process.env.NODE_ENV === 'production',
+    getVite = () => null,
+    mountFallback404 = true
+  } = options;
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
+
+  // Reject ambiguous Transfer-Encoding + Content-Length request smuggling probes
+  app.use((req, res, next) => {
+    if (req.headers['transfer-encoding'] && req.headers['content-length']) {
+      return res.status(400).json({ error: 'Malformed framing headers.' });
+    }
+    return next();
+  });
+
   app.use(securityHeadersMiddleware);
+
+  // Never allow shared/CDN caching on API endpoints
+  app.use('/api', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
 
   const largeUploadJson = express.json({ limit: '26mb' });
   const standardJson = express.json({ limit: '256kb' });
   app.use((req, res, next) => {
-    if (req.path === '/api/auth/register' || req.path === '/api/landlord/verification') {
-      return largeUploadJson(req, res, next);
-    }
-    return standardJson(req, res, next);
+    const parser = (req.path === '/api/auth/register' || req.path === '/api/landlord/verification')
+      ? largeUploadJson
+      : standardJson;
+    parser(req, res, (err) => {
+      if (err) {
+        if (err.type === 'entity.too.large' || err.status === 413) {
+          return res.status(413).json({
+            error: 'Uploaded files are too large together. Please keep each document under 4MB (or compress photos/PDFs) and try again.',
+            code: 'PAYLOAD_TOO_LARGE'
+          });
+        }
+        return res.status(400).json({ error: 'Invalid request payload format.', code: 'INVALID_JSON' });
+      }
+      return next();
+    });
   });
   app.use(express.urlencoded({ extended: false, limit: '64kb' }));
+  app.use(stripPrototypePollutionMiddleware);
+
+  const chatLimiter = createRateLimiter({
+    windowMs: 60_000,
+    max: 20,
+    message: 'Too many AI assistant requests. Please wait a minute before trying again.'
+  });
+  const authLimiter = createRateLimiter({
+    windowMs: 15 * 60_000,
+    max: 12,
+    message: 'Too many authentication attempts. Please wait a few minutes and try again.'
+  });
+  const formLimiter = createRateLimiter({
+    windowMs: 15 * 60_000,
+    max: 12,
+    message: 'Too many form submissions. Please wait a few minutes before retrying.'
+  });
+  const paymentLimiter = createRateLimiter({
+    windowMs: 5 * 60_000,
+    max: 20,
+    message: 'Too many payment requests. Please wait shortly and try again.'
+  });
+
+  app.use('/api/chat', chatLimiter);
+  app.use('/api/auth/register', authLimiter);
+  app.use('/api/auth/resend-confirmation', authLimiter);
+  app.use('/api/auth/reset-password', authLimiter);
+  app.use('/api/contact', formLimiter);
+  app.use('/api/reports', formLimiter);
+  app.use('/api/dmca', formLimiter);
+  app.use('/api/payments', paymentLimiter);
 
   // --- HEALTH ---
   app.get('/api/health', (_req, res) => {
@@ -152,12 +236,14 @@ export function createApp(options = {}) {
     const paymentsConfigured = Boolean(process.env.PAYNOW_INTEGRATION_ID && process.env.PAYNOW_INTEGRATION_KEY);
     const paymentsSandbox = process.env.PAYMENTS_SANDBOX_MODE === 'true';
     const aiConfigured = Boolean((process.env.GEMINI_API_KEY || '').trim());
+    const serviceRoleConfigured = Boolean(cfg.serviceRoleKey);
     const publicOrigin = resolvePublicAppOrigin(req);
 
     res.json({
       supabaseConfigured: cfg.configured,
       supabaseUrl: cfg.configured ? cfg.url : '',
       supabaseAnonKey: cfg.configured ? cfg.anonKey : '',
+      serviceRoleConfigured,
       paymentsConfigured,
       paymentsSandbox,
       aiConfigured,
@@ -231,7 +317,9 @@ export function createApp(options = {}) {
         return res.status(400).json({ error: 'Password must be between 8 and 128 characters.' });
       }
 
-      // Enforce Landlord KYC & Title Deed upload validation BEFORE calling auth.signUp
+      const adminClient = createAdminServerSupabase();
+
+      // Enforce Landlord KYC & Title Deed validation BEFORE calling auth.signUp
       let validatedKyc = null;
       if (cleanRole === 'landlord') {
         if (cleanPhone.length < 7) {
@@ -283,6 +371,13 @@ export function createApp(options = {}) {
           }
         }
 
+        if (!adminClient) {
+          return res.status(503).json({
+            error: 'Server storage configuration (SUPABASE_SERVICE_ROLE_KEY) is required to securely store landlord verification documents.',
+            code: 'KYC_STORAGE_UNAVAILABLE'
+          });
+        }
+
         validatedKyc = {
           nationalIdNumber: idCheck.normalized,
           ownershipCapacity: capacity,
@@ -309,30 +404,78 @@ export function createApp(options = {}) {
         ? `${publicOrigin}/auth/login.html?confirmed=1`
         : undefined;
 
-      const { data, error } = await supabase.auth.signUp({
+      const userMetadataPayload = {
+        name: cleanName,
+        role: cleanRole,
+        phone: cleanPhone,
+        age_verified: true,
+        verification_status: cleanRole === 'landlord' ? 'pending' : 'unverified'
+      };
+
+      let { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
           ...(emailRedirectTo ? { emailRedirectTo } : {}),
-          data: {
-            name: cleanName,
-            role: cleanRole,
-            phone: cleanPhone,
-            age_verified: true,
-            verification_status: cleanRole === 'landlord' ? 'pending' : 'unverified'
-          }
+          data: userMetadataPayload
         }
       });
 
       if (error) {
         const msg = String(error.message || 'Registration failed.');
         const lower = msg.toLowerCase();
-        const isRateLimit = lower.includes('rate limit');
-        const status = lower.includes('already registered') ? 409 : isRateLimit ? 429 : 400;
-        const cleanMsg = isRateLimit
-          ? 'Verification email limit reached temporarily. Please wait a few minutes and try again (platform admin: configure custom SMTP in Supabase Auth to raise email limits).'
-          : msg;
-        return res.status(status).json({ error: cleanMsg });
+        const isAlreadyRegistered = lower.includes('already registered') || error.code === 'user_already_exists';
+        const isRateLimit = lower.includes('rate limit') || error.code === 'over_email_send_rate_limit' || Number(error.status) === 429;
+        const isEmailSendFailure = lower.includes('sending confirmation') || lower.includes('smtp') || error.code === 'unexpected_failure';
+
+        const isAdminEmail = getAdminEmails().includes(cleanEmail);
+        if ((isRateLimit || isEmailSendFailure) && adminClient?.auth?.admin && !isAdminEmail) {
+          const { data: createdAdminUser, error: adminCreateErr } = await adminClient.auth.admin.createUser({
+            email: cleanEmail,
+            password,
+            email_confirm: true,
+            user_metadata: userMetadataPayload
+          });
+
+          if (adminCreateErr) {
+            const adminMsg = String(adminCreateErr.message || 'Registration failed.');
+            const adminLower = adminMsg.toLowerCase();
+            if (adminLower.includes('already') || adminLower.includes('exists') || adminCreateErr.code === 'email_exists') {
+              return res.status(409).json({
+                error: 'An account with this email already exists. Please sign in on the Login page or reset your password.',
+                code: 'EMAIL_ALREADY_REGISTERED'
+              });
+            }
+            return res.status(400).json({ error: adminMsg, code: adminCreateErr.code || 'ADMIN_CREATE_FAILED' });
+          }
+
+          const { data: signInData } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password
+          });
+          data = {
+            user: signInData?.user || createdAdminUser?.user || null,
+            session: signInData?.session || null
+          };
+          error = null;
+        } else {
+          const status = isAlreadyRegistered ? 409 : isRateLimit ? 429 : isEmailSendFailure ? 502 : 400;
+          const code = isAlreadyRegistered
+            ? 'EMAIL_ALREADY_REGISTERED'
+            : isRateLimit
+              ? 'EMAIL_RATE_LIMIT'
+              : isEmailSendFailure
+                ? 'EMAIL_DELIVERY_FAILED'
+                : (error.code || 'SIGNUP_REJECTED');
+          const cleanMsg = isAlreadyRegistered
+            ? 'An account with this email already exists. Please sign in on the Login page or reset your password.'
+            : isRateLimit
+              ? 'Verification email limit reached temporarily on our auth provider. Please wait a few minutes and try again (admin: configure custom SMTP in Supabase Auth to raise email limits).'
+              : isEmailSendFailure
+                ? `Could not deliver the confirmation email (${msg}). Please check Supabase Auth SMTP / URL settings or try again shortly.`
+                : msg;
+          return res.status(status).json({ error: cleanMsg, code });
+        }
       }
 
       // Supabase returns user with empty identities[] and sends NO email when email already exists
@@ -343,12 +486,11 @@ export function createApp(options = {}) {
         });
       }
 
-      const adminClient = createAdminServerSupabase();
       const writeClient = adminClient || createAuthedServerSupabase(data?.session?.access_token);
 
       if (writeClient && data?.user?.id) {
         try {
-          await writeClient
+          const { error: upsertErr } = await writeClient
             .from('users')
             .upsert({
               id: data.user.id,
@@ -360,9 +502,8 @@ export function createApp(options = {}) {
               verification_status: cleanRole === 'landlord' ? 'pending' : 'unverified',
               age_verified: true
             }, { onConflict: 'id' });
-        } catch {
-          // If verification_status column hasn't been added to an older schema yet, retry without it
-          try {
+
+          if (upsertErr) {
             await writeClient
               .from('users')
               .upsert({
@@ -371,23 +512,16 @@ export function createApp(options = {}) {
                 name: cleanName,
                 role: cleanRole,
                 phone: cleanPhone || null,
-                age_verified: true
+                verified: false
               }, { onConflict: 'id' });
-          } catch {
-            // Do not crash registration on profile sync
           }
+        } catch {
+          // Do not crash registration on profile sync
         }
       }
 
       let kycSummary = null;
       if (cleanRole === 'landlord' && validatedKyc && data?.user?.id) {
-        if (!adminClient) {
-          return res.status(503).json({
-            error: 'Server storage configuration (SUPABASE_SERVICE_ROLE_KEY) is required to securely store landlord verification documents.',
-            code: 'KYC_STORAGE_UNAVAILABLE'
-          });
-        }
-
         const duplicateWarnings = await checkDuplicateDocuments(adminClient, {
           userId: data.user.id,
           titleDeedSha256: validatedKyc.titleDeedDoc.sha256,
@@ -1011,8 +1145,11 @@ export function createApp(options = {}) {
       return res.status(404).json({ error: 'Document file not found in private storage.' });
     }
 
+    const safeFilename = path.basename(objectPath).replace(/[^a-zA-Z0-9._-]/g, '_');
     res.setHeader('Content-Type', fileData.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${path.basename(objectPath)}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
     return res.send(fileData.buffer);
   });
@@ -1375,9 +1512,26 @@ export function createApp(options = {}) {
     return res.status(200).json(result);
   });
 
-  // --- CRAWLER / SEARCH ENGINE ROBOTS, SITEMAP & FAVICON ---
+  // --- CRAWLER / SEARCH ENGINE ROBOTS, VERIFICATION, SITEMAP & FAVICON ---
+  app.get('/google6a7d612c835742de.html', (_req, res) => {
+    const publicPath = path.join(__dirname, 'public', 'google6a7d612c835742de.html');
+    const distPath = path.join(__dirname, 'dist', 'google6a7d612c835742de.html');
+    const filePath = fs.existsSync(publicPath) ? publicPath : (fs.existsSync(distPath) ? distPath : '');
+    const content = filePath ? fs.readFileSync(filePath, 'utf8') : 'google-site-verification: google6a7d612c835742de.html';
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).type('text/html; charset=utf-8').send(content);
+  });
+
+  app.get(['/google-site-verification.txt', '/.well-known/google-site-verification.txt'], (_req, res) => {
+    const token = resolveGoogleVerificationToken();
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).type('text/plain; charset=utf-8').send(`google-site-verification=${token}\n`);
+  });
+
   app.get('/robots.txt', (req, res) => {
     const origin = resolvePublicAppOrigin(req);
+    res.setHeader('Vary', 'Host, X-Forwarded-Host');
+    res.setHeader('Cache-Control', 'public, max-age=300');
     res.type('text/plain').send(buildRobotsTxt(origin));
   });
 
@@ -1385,6 +1539,7 @@ export function createApp(options = {}) {
     try {
       const origin = resolvePublicAppOrigin(req);
       const xml = await buildSitemapXml(origin, createPublicServerSupabase());
+      res.setHeader('Vary', 'Host, X-Forwarded-Host');
       res.setHeader('Cache-Control', 'public, max-age=300');
       return res.status(200).type('application/xml; charset=utf-8').send(xml);
     } catch {
@@ -1400,7 +1555,14 @@ export function createApp(options = {}) {
     return res.status(204).end();
   });
 
-  // --- DYNAMIC OPENGRAPH / TWITTER / SCHEMA.ORG HTML METADATA ---
+  // Canonical one-URL-per-page redirect for /index.html -> /
+  app.get('/index.html', (req, res) => {
+    const queryIdx = req.originalUrl.indexOf('?');
+    const qs = queryIdx >= 0 ? req.originalUrl.slice(queryIdx) : '';
+    return res.redirect(301, `/${qs}`);
+  });
+
+  // --- DYNAMIC OPENGRAPH / TWITTER / SCHEMA.ORG & SSR HTML ---
   app.use(async (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     const reqPath = req.path || '/';
@@ -1428,15 +1590,48 @@ export function createApp(options = {}) {
         return next();
       }
 
-      const rawHtml = await fs.promises.readFile(resolvedPath, 'utf8');
       const origin = resolvePublicAppOrigin(req);
+      const publicSupabase = createPublicServerSupabase();
       const listingId = reqPath === '/listing.html' ? String(req.query?.id || '').trim() : '';
-      let listingSeo = null;
-      if (listingId) {
-        listingSeo = await fetchListingForSeo(createPublicServerSupabase(), listingId);
+
+      if (reqPath === '/listing.html' && (!listingId || listingId === 'sample')) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(404).type('html').send(
+          build404Html({
+            origin,
+            title: 'Property Not Found – Nortava Real Estate',
+            message: 'This property listing link is missing an ID or is no longer available.'
+          })
+        );
       }
 
-      let finalHtml = injectSocialMetaTags(rawHtml, {
+      let listingSeo = null;
+      if (listingId && publicSupabase) {
+        listingSeo = await fetchListingForSeo(publicSupabase, listingId);
+        if (!listingSeo) {
+          res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(404).type('html').send(
+            build404Html({
+              origin,
+              title: 'Property Not Found – Nortava Real Estate',
+              message: 'This property listing may have been removed or is not published yet.'
+            })
+          );
+        }
+      }
+
+      let finalHtml = await fs.promises.readFile(resolvedPath, 'utf8');
+
+      if (listingSeo) {
+        finalHtml = injectListingBodySsr(finalHtml, listingSeo);
+      } else if (reqPath === '/listings.html' && publicSupabase) {
+        const ssrListings = await fetchPublishedListingsForSsr(publicSupabase, 12);
+        finalHtml = injectListingsDirectorySsr(finalHtml, ssrListings);
+      }
+
+      finalHtml = injectSocialMetaTags(finalHtml, {
         origin,
         pathname: reqPath,
         listingId,
@@ -1448,17 +1643,22 @@ export function createApp(options = {}) {
         finalHtml = await vite.transformIndexHtml(req.originalUrl, finalHtml);
       }
 
+      res.setHeader('Vary', 'Host, X-Forwarded-Host');
       if (isNoIndexPath(reqPath)) {
         res.setHeader('X-Robots-Tag', 'noindex, nofollow');
         res.setHeader('Cache-Control', 'no-store');
       } else {
-        res.setHeader('Cache-Control', 'public, max-age=60');
+        res.setHeader('Cache-Control', 'public, max-age=60, must-revalidate');
       }
       return res.status(200).type('html').send(finalHtml);
     } catch {
       return next();
     }
   });
+
+  if (mountFallback404) {
+    registerNotFoundHandler(app);
+  }
 
   return app;
 }
@@ -1501,7 +1701,7 @@ function resolveListenConfig() {
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
   let vite = null;
-  const app = createApp({ isProd, getVite: () => vite });
+  const app = createApp({ isProd, getVite: () => vite, mountFallback404: false });
   const { host, port } = resolveListenConfig();
 
   if (isProd) {
@@ -1517,9 +1717,17 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
+  registerNotFoundHandler(app);
+
   const server = app.listen(port, host, () => {
     console.log(`Nortava server listening on http://${host}:${port}`);
   });
+
+  // Harden Node HTTP server socket/header timeouts against slowloris & connection floods
+  server.headersTimeout = 15000;
+  server.requestTimeout = 30000;
+  server.keepAliveTimeout = 5000;
+  server.maxHeadersCount = 64;
 
   server.on('error', (err) => {
     console.error(`Failed to bind server on ${host}:${port}:`, err?.message || err);
