@@ -432,13 +432,23 @@ test('Repository Static Security & Font Self-Hosting Audit', () => {
   const checkFile = (filePath) => {
     const ext = path.extname(filePath).toLowerCase();
     if (!['.html', '.css', '.js'].includes(ext)) return;
+    const relPath = path.relative(ROOT, filePath);
     const content = fs.readFileSync(filePath, 'utf8');
     for (const pat of forbiddenPatterns) {
       assert.equal(
         pat.regex.test(content),
         false,
-        `Forbidden pattern "${pat.name}" found in ${path.relative(ROOT, filePath)}`
+        `Forbidden pattern "${pat.name}" found in ${relPath}`
       );
+    }
+    if (
+      ext === '.html' &&
+      /<\/head>/i.test(content) &&
+      !relPath.startsWith(`public${path.sep}`) &&
+      path.basename(filePath) !== 'google6a7d612c835742de.html'
+    ) {
+      assert.match(content, /<title>[\s\S]+?<\/title>/i, `Missing <title> in ${relPath}`);
+      assert.match(content, /<link rel="icon" href="\/favicon\.ico" sizes="any">/i, `Missing tab favicon in ${relPath}`);
     }
   };
 
@@ -788,6 +798,8 @@ test('Social Media Metadata & Google SEO: injects OpenGraph/Schema.org, handles 
       assert.match(res.headers.get('vary') || '', /Host/i);
       const html = await res.text();
 
+      assert.match(html, /<link rel="icon" href="\/favicon\.ico" sizes="any">/);
+      assert.match(html, /<link rel="icon" type="image\/png" sizes="48x48" href="\/favicon-48x48\.png">/);
       assert.match(html, /<meta name="robots" content="index, follow, max-image-preview:large/);
       assert.match(html, /<meta name="google-site-verification" content="4aCMJuKR4l8mPFePSPdcX8kGYdonI_o4O4Uek2RSIiw">/);
       assert.match(html, /<meta property="og:site_name" content="Nortava Real Estate">/);
@@ -828,12 +840,15 @@ test('Social Media Metadata & Google SEO: injects OpenGraph/Schema.org, handles 
     assert.match(listingsHtml, /id="dropdownPriceBtn"/);
     assert.match(listingsHtml, /id="dropdownFiltersBtn"/);
 
-    // Auth / admin / dashboard pages must be marked noindex, nofollow
-    for (const privatePath of ['/auth/login.html', '/admin/index.html']) {
+    // Auth / admin / dashboard / payment pages must be marked noindex, nofollow AND still include tab icons
+    for (const privatePath of ['/auth/login.html', '/admin/index.html', '/dashboard/tenant.html', '/payment/pay.html']) {
       const privRes = await fetch(`${baseUrl}${privatePath}`, { headers });
       assert.equal(privRes.status, 200);
       assert.equal(privRes.headers.get('x-robots-tag'), 'noindex, nofollow');
-      assert.match(await privRes.text(), /<meta name="robots" content="noindex, nofollow">/);
+      const privHtml = await privRes.text();
+      assert.match(privHtml, /<meta name="robots" content="noindex, nofollow">/);
+      assert.match(privHtml, /<link rel="icon" href="\/favicon\.ico" sizes="any">/);
+      assert.match(privHtml, /<link rel="icon" type="image\/png" sizes="48x48" href="\/favicon-48x48\.png">/);
     }
 
     const robotsRes = await fetch(`${baseUrl}/robots.txt`, { headers });
@@ -865,8 +880,10 @@ test('Social Media Metadata & Google SEO: injects OpenGraph/Schema.org, handles 
     assert.match(sitemapXml, /<loc>https:\/\/nortava-share\.example\.com\/faq\.html<\/loc>/);
     assert.doesNotMatch(sitemapXml, /\/admin\/|\/dashboard\/|\/auth\/login\.html/);
 
-    const favRes = await fetch(`${baseUrl}/favicon.ico`);
-    assert.equal(favRes.status, 200);
+    for (const iconRoute of ['/favicon.ico', '/favicon-192x192.png', '/favicon-48x48.png', '/favicon-32x32.png', '/apple-touch-icon.png', '/assets/images/logo/nortava-tab-icon.png']) {
+      const favRes = await fetch(`${baseUrl}${iconRoute}`);
+      assert.equal(favRes.status, 200, `Expected 200 for ${iconRoute}`);
+    }
   } finally {
     if (prevAllowed === undefined) delete process.env.ALLOWED_HOSTS;
     else process.env.ALLOWED_HOSTS = prevAllowed;

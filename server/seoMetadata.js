@@ -346,7 +346,12 @@ export function build404Html({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>${escapeText(title)}</title>
-  <link rel="icon" type="image/png" href="${escapeAttr(logoSrc)}">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -747,8 +752,12 @@ export function injectSocialMetaTags(html, { origin = '', pathname = '/', listin
     ...(safeGoogleVerification ? [`  <meta name="google-site-verification" content="${escapeAttr(safeGoogleVerification)}">`] : []),
     `  <meta name="theme-color" content="#0f172a">`,
     `  <link rel="canonical" href="${escapeAttr(canonicalUrl)}">`,
-    `  <link rel="icon" type="image/png" href="${escapeAttr(logoUrl)}">`,
-    `  <link rel="apple-touch-icon" href="${escapeAttr(logoUrl)}">`,
+    `  <link rel="icon" href="/favicon.ico" sizes="any">`,
+    `  <link rel="shortcut icon" href="/favicon.ico">`,
+    `  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">`,
+    `  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">`,
+    `  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">`,
+    `  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">`,
     `  <meta property="og:type" content="website">`,
     `  <meta property="og:site_name" content="${escapeAttr(BRAND_NAME)}">`,
     `  <meta property="og:locale" content="en_ZW">`,

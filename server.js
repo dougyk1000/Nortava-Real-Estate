@@ -1514,9 +1514,10 @@ export function createApp(options = {}) {
 
   // --- CRAWLER / SEARCH ENGINE ROBOTS, VERIFICATION, SITEMAP & FAVICON ---
   app.get('/google6a7d612c835742de.html', (_req, res) => {
+    const rootPath = path.join(__dirname, 'google6a7d612c835742de.html');
     const publicPath = path.join(__dirname, 'public', 'google6a7d612c835742de.html');
     const distPath = path.join(__dirname, 'dist', 'google6a7d612c835742de.html');
-    const filePath = fs.existsSync(publicPath) ? publicPath : (fs.existsSync(distPath) ? distPath : '');
+    const filePath = [rootPath, distPath, publicPath].find((p) => fs.existsSync(p)) || '';
     const content = filePath ? fs.readFileSync(filePath, 'utf8') : 'google-site-verification: google6a7d612c835742de.html';
     res.setHeader('Cache-Control', 'public, max-age=300');
     return res.status(200).type('text/html; charset=utf-8').send(content);
@@ -1548,12 +1549,34 @@ export function createApp(options = {}) {
   });
 
   app.get('/favicon.ico', (_req, res) => {
-    const iconPath = path.join(__dirname, 'assets', 'images', 'logo', 'nortava-logo.png');
-    if (fs.existsSync(iconPath)) {
-      return res.sendFile(iconPath);
+    const icoPath = path.join(__dirname, 'assets', 'images', 'logo', 'favicon.ico');
+    const fallbackPath = path.join(__dirname, 'public', 'favicon.ico');
+    const resolved = fs.existsSync(icoPath) ? icoPath : (fs.existsSync(fallbackPath) ? fallbackPath : '');
+    if (resolved) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.type('image/x-icon');
+      return res.sendFile(resolved);
     }
     return res.status(204).end();
   });
+
+  for (const [routePath, relAsset] of [
+    ['/favicon-192x192.png', 'assets/images/logo/nortava-tab-icon.png'],
+    ['/favicon-48x48.png', 'assets/images/logo/favicon-48x48.png'],
+    ['/favicon-32x32.png', 'assets/images/logo/favicon-32x32.png'],
+    ['/apple-touch-icon.png', 'assets/images/logo/nortava-tab-icon.png']
+  ]) {
+    app.get(routePath, (_req, res) => {
+      const assetPath = path.join(__dirname, relAsset);
+      if (fs.existsSync(assetPath)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.sendFile(assetPath);
+      }
+      return res.status(404).end();
+    });
+  }
+
+  app.use('/assets/images', express.static(path.join(__dirname, 'assets', 'images'), { maxAge: '1d' }));
 
   // Canonical one-URL-per-page redirect for /index.html -> /
   app.get('/index.html', (req, res) => {
