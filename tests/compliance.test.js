@@ -449,6 +449,8 @@ test('Repository Static Security & Font Self-Hosting Audit', () => {
     ) {
       assert.match(content, /<title>[\s\S]+?<\/title>/i, `Missing <title> in ${relPath}`);
       assert.match(content, /<link rel="icon" href="\/favicon\.ico" sizes="any">/i, `Missing tab favicon in ${relPath}`);
+      assert.match(content, /class="[^"]*\btheme-toggle\b/i, `Missing theme-toggle button in ${relPath}`);
+      assert.match(content, /src="\/core\/main\.js"/i, `Missing /core/main.js script in ${relPath}`);
     }
   };
 

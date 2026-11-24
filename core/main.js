@@ -1,4 +1,4 @@
-import { initTheme, setupThemeToggle } from './utils/theme.js';
+import { initTheme, toggleTheme, setupThemeToggle, syncThemeIcons } from './utils/theme.js';
 import { initConsentManager } from './utils/consent.js';
 import { initNavigation, updateNavForAuth } from './utils/navigation.js';
 import { initChatbot } from './chatbot/chatbot.js';
@@ -47,7 +47,7 @@ function routeIncomingAuthCallback() {
   return false;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function bootNortavaApp() {
   if (routeIncomingAuthCallback()) return;
 
   initConsentManager();
@@ -58,7 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatbot();
 
   observeAnimations();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootNortavaApp);
+} else {
+  bootNortavaApp();
+}
 
 function observeAnimations() {
   const cards = document.querySelectorAll('.card, .feature-card, .step-card, .stat-card');
@@ -89,7 +95,7 @@ function observeAnimations() {
 }
 
 window.nortava = {
-  theme: { initTheme, setupThemeToggle },
+  theme: { initTheme, toggleTheme, setupThemeToggle, syncThemeIcons },
   navigation: { initNavigation },
   logout: globalLogout
 };

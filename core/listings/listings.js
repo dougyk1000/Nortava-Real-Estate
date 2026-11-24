@@ -311,6 +311,29 @@ function updateFilterToolbarSummaries() {
   }
 }
 
+function positionPopoverWithinBounds(popover, wrap) {
+  if (!popover || !wrap) return;
+  if (window.innerWidth <= 768) {
+    popover.style.left = '';
+    popover.style.right = '';
+    return;
+  }
+
+  popover.style.left = '0px';
+  popover.style.right = 'auto';
+
+  const toolbar = wrap.closest('.compact-filter-toolbar');
+  const boundsRect = toolbar?.getBoundingClientRect();
+  const maxRight = Math.min(boundsRect ? boundsRect.right : window.innerWidth - 16, window.innerWidth - 16);
+  const minLeft = Math.max(boundsRect ? boundsRect.left : 16, 16);
+  const popRect = popover.getBoundingClientRect();
+
+  if (popRect.right > maxRight) {
+    const shiftLeft = Math.max(-(popRect.left - minLeft), maxRight - popRect.right);
+    popover.style.left = `${Math.round(shiftLeft)}px`;
+  }
+}
+
 function setupDropdownPopovers() {
   const wraps = document.querySelectorAll('.filter-dropdown-wrap');
   wraps.forEach(wrap => {
@@ -325,6 +348,7 @@ function setupDropdownPopovers() {
       if (willOpen) {
         popover.classList.add('open');
         trigger.setAttribute('aria-expanded', 'true');
+        positionPopoverWithinBounds(popover, wrap);
       }
     });
 
@@ -332,6 +356,13 @@ function setupDropdownPopovers() {
     popover.querySelectorAll('.filter-popover-close, .filter-popover-done').forEach(btn => {
       btn.addEventListener('click', () => closeAllDropdownPopovers());
     });
+  });
+
+  window.addEventListener('resize', () => {
+    const openPop = document.querySelector('.filter-popover.open');
+    if (openPop) {
+      positionPopoverWithinBounds(openPop, openPop.closest('.filter-dropdown-wrap'));
+    }
   });
 
   document.querySelectorAll('[data-reset-popover]').forEach(btn => {

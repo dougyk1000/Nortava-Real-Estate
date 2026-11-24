@@ -247,6 +247,7 @@ img {
   justify-content: center;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   background: var(--bg-tertiary);
   border-radius: var(--radius-full);
   color: var(--text-secondary);
@@ -261,6 +262,14 @@ img {
 
 .theme-toggle i {
   font-size: 1.25rem;
+}
+
+.auth-theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 60;
+  box-shadow: var(--shadow-md);
 }
 
 .mobile-menu-btn {
@@ -625,7 +634,7 @@ img {
 }
 
 .quick-reply {
-  background: white;
+  background: var(--bg-card);
   border: 1px solid var(--primary);
   color: var(--primary);
   border-radius: 20px;
@@ -636,7 +645,7 @@ img {
 
 .quick-reply:hover {
   background: var(--primary);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .property-badge.for-sale {
@@ -1153,15 +1162,20 @@ select.input {
   margin-bottom: 0.75rem;
   position: relative;
   z-index: 30;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .filter-search-inline {
   flex: 1 1 220px;
-  min-width: 190px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .filter-search-inline .input {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding-top: 0.55rem;
   padding-bottom: 0.55rem;
   font-size: 0.9375rem;
@@ -1169,6 +1183,7 @@ select.input {
 
 .filter-dropdown-wrap {
   position: relative;
+  max-width: 100%;
 }
 
 .filter-dropdown-trigger {
@@ -1176,6 +1191,7 @@ select.input {
   align-items: center;
   gap: 0.45rem;
   padding: 0.55rem 0.85rem;
+  max-width: min(260px, 100%);
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -1184,7 +1200,14 @@ select.input {
   border-radius: var(--radius);
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
   transition: all var(--transition);
+}
+
+.filter-dropdown-trigger span:not(.filter-count-badge) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .filter-dropdown-trigger:hover {
@@ -1203,6 +1226,7 @@ select.input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -1217,14 +1241,17 @@ select.input {
   position: absolute;
   top: calc(100% + 0.5rem);
   left: 0;
-  min-width: 320px;
-  max-width: min(440px, 92vw);
+  width: min(400px, calc(100vw - 2rem));
+  min-width: 0;
+  max-width: calc(100vw - 2rem);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   padding: 1.1rem;
   z-index: 60;
+  box-sizing: border-box;
+  overflow: hidden;
   display: none;
 }
 
@@ -1233,13 +1260,14 @@ select.input {
 }
 
 .filter-popover-wide {
-  min-width: 360px;
+  width: min(460px, calc(100vw - 2rem));
 }
 
 .filter-popover-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   margin-bottom: 0.85rem;
 }
 
@@ -1251,8 +1279,14 @@ select.input {
 
 .filter-popover-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.filter-popover-grid .input-group,
+.filter-popover-grid .input-group-full {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .filter-popover-grid .input-group-full {
@@ -1260,12 +1294,19 @@ select.input {
 }
 
 .filter-popover .input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 0.55rem 0.75rem;
   font-size: 0.9rem;
 }
 
 .filter-popover select.input {
-  padding-right: 2.25rem;
+  padding-right: 2rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .price-preset-chips {
@@ -1296,7 +1337,7 @@ select.input {
 
 .filter-amenities-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
   margin-top: 0.85rem;
 }
@@ -1305,6 +1346,7 @@ select.input {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
   padding: 0.5rem 0.65rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -1314,6 +1356,7 @@ select.input {
 }
 
 .filter-check-item input[type="checkbox"] {
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   accent-color: var(--primary);
@@ -1324,6 +1367,7 @@ select.input {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
   margin-top: 1rem;
   padding-top: 0.85rem;
   border-top: 1px solid var(--border);
@@ -1355,6 +1399,7 @@ select.input {
     right: 1rem;
     top: auto;
     bottom: 1rem;
+    width: auto;
     min-width: 0;
     max-width: none;
     max-height: 78vh;
@@ -1362,7 +1407,13 @@ select.input {
   }
 
   .filter-popover-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .filter-amenities-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

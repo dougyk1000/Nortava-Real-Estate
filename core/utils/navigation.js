@@ -162,8 +162,8 @@ export async function updateNavForAuth() {
         </button>
       </div>
     `;
-    const { setupThemeToggle } = window.nortava?.theme || {};
-    if (setupThemeToggle) setupThemeToggle();
+    window.nortava?.theme?.setupThemeToggle?.();
+    window.nortava?.theme?.syncThemeIcons?.();
   }
 
   if (mobileActions && mobileActions.querySelector('a[href*="login.html"]')) {
